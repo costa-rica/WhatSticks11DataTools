@@ -47,7 +47,7 @@ All features are specific to What Sticks Platform Applicaitons and leverage the 
 
 
 ## Note on ws_utilities
-The subdirectories within ws_utilities will be labeled by the application within the platform that first required the process. It will start with a main.py. The intention is that these processes will be reused and in some cases intriciate. As we develop better ways or run into problems we want to fix them in one place.
+The subdirectories within ws_utilities will be labeled by the application within the platform that first required the process. It will start with a main.py. The intention is that these processes will be reused and to not duplicate difficult or complicated tasks. As we develop better ways or run into problems we want to fix them in one place.
 
 
 ## Contributing

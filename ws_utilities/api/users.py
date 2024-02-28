@@ -7,8 +7,8 @@ import time
 from ws_models import sess, engine, Users, WeatherHistory, Locations, UserLocationDay
 from ..common.config_and_logger import config, logger_ws_utilities
 from timezonefinder import TimezoneFinder
+from ..scheduler.main import add_weather_history
 
-# Elegant Method
 def convert_string_to_datetime(date_string):
     # List of formats to try
     formats = ['%Y%m%d-%H%M', '%Y-%m-%d %H:%M:%S', '%Y/%m/%d']
@@ -20,7 +20,6 @@ def convert_string_to_datetime(date_string):
             continue
     # If none of the formats work, return None or raise an exception
     return None
-
 
 def convert_lat_lon_to_timezone_string(latitude, longitude):
     latitude = float(latitude)
@@ -119,15 +118,9 @@ def find_user_location(user_latitude, user_longitude) -> str:
 def add_user_loc_day_process(user_id,latitude, longitude, dateTimeUtc):
     logger_ws_utilities.info(f"- accessed:  ws_utilities -- add_user_loc_day_process - ")
     location_id = find_user_location(latitude, longitude)
-    # if isinstance(location_id, int):
-    #     logger_ws_utilities.info(f"location_id: {location_id}")
-    logger_ws_utilities.info(f"- >>>>>> location_id value: {location_id} - ")
-    logger_ws_utilities.info(f"- >>>>>> location_id type: {type(location_id)} - ")
+
     if location_id == "no_location_found":
-    # if isinstance(location_id, str):
-        logger_ws_utilities.info(f"- location not found adding it to Locations - ")
-        # user_lat=location.get('latitude')
-        # user_lon=location.get('longitude')
+        logger_ws_utilities.info(f"- location not found adding it to Locations Table- ")
         timezone_str = convert_lat_lon_to_timezone_string(latitude, longitude)
         location_dict = convert_lat_lon_to_city_country(latitude, longitude)
         city = location_dict.get('city', 'Not found')
@@ -147,15 +140,12 @@ def add_user_loc_day_process(user_id,latitude, longitude, dateTimeUtc):
         sess.commit()
         location_id = new_location.id
 
-        ############################################################################
-        # TODO: Perfect place to send call to update WeatherHistory for past 30 days
-        ############################################################################
+        # add past 30 days of weather history 
+        add_weather_history_30_days(location_id)
 
     else:
         logger_ws_utilities.info(f"- location_id found in Locations Table --- > {location_id} - ")
     
-    logger_ws_utilities.info(f"- location_id found in Locations Table --- > {location_id} - ")
-    # date_time_obj = convert_date_string_to_datetime(dateTimeUtc)
     date_time_obj = convert_string_to_datetime(dateTimeUtc)
     new_user_location_day = UserLocationDay(user_id=user_id,location_id=location_id,date_time_utc_user_check_in=date_time_obj,
                                             date_utc_user_check_in=date_time_obj)
@@ -172,12 +162,44 @@ def add_user_loc_day_process(user_id,latitude, longitude, dateTimeUtc):
             sess.add(new_user_location_day)
             sess.commit()
         except Exception as e:
-            logger_ws_utilities.info(f"[Should not fire] Failed to add becuase: {e}")
+            logger_ws_utilities.info(f"Error caused by trying to add a new UserLocationDay row")
+            logger_ws_utilities.info(f"{type(e).__name__}: {e}")
             sess.rollback()
     else:
-        logger_ws_utilities.info("########################################")
         logger_ws_utilities.info("User already has an entry for this day")
 
     return location_id
 
+
+
+def add_weather_history_30_days(location_id):
+    logger_ws_utilities.info("- accessed: ws_utlitiles/api/users.py add_weather_history_30_days ")
+
+    location = sess.get(Locations, location_id)
+
+    api_token = config.VISUAL_CROSSING_TOKEN
+    vc_base_url = config.VISUAL_CROSSING_BASE_URL
+
+    # Calculate the date range for the last 30 days
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=30)
+
+    # Format dates in YYYY-MM-DD format
+    start_date_str = start_date.strftime('%Y-%m-%d')
+    end_date_str = end_date.strftime('%Y-%m-%d')
+
+    api_url = f"{vc_base_url}/{location.lat},{location.lon}/{start_date_str}/{end_date_str}"
+    params = {
+        'unitGroup': 'us',  # or 'metric' based on your preference
+        'key': api_token,
+        'include': 'days'  # Adjust based on the details you need
+    }
+
+    # Make the API request
+    response_30dayHist = requests.get(api_url, params=params)
+
+    # for day in response_30dayHist.json().get('days'):
+    add_weather_history(location.id, response_30dayHist.json())
+
+    logger_ws_utilities.info(f"- successfully added 30 days for location: {location.id} - {location.city} ")
 
