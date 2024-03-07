@@ -9,6 +9,8 @@ from ..daily_dfs.heart_rate import create_df_daily_heart_rate, \
     create_df_n_minus1_daily_heart_rate
 from ..daily_dfs.workouts import create_df_daily_workout_duration, \
     create_df_daily_workout_duration_dummies
+from ..common.create_user_df import create_user_location_date_df
+from ..daily_dfs.weather import create_df_weather_history
 
 # df here would come from create_user_df create_user_qty_cat_df
 def corr_sleep_steps(df):
@@ -147,3 +149,28 @@ def corr_sleep_workout_dummies(df_qty_cat, df_workouts):
         logger_ws_analysis.info(f"error in corr_sleep_workouts: {e}")
         return "insufficient data", "insufficient data"
 
+
+def corr_sleep_cloudiness(df_qty_cat, df_user_locations_day, df_weather_history):
+    logger_ws_analysis.info("- in corr_sleep_cloudiness")
+    user_id = df['user_id'].iloc[0]
+
+    df_sleep_time = create_df_daily_sleep(df_qty_cat)
+    df_sleep_time.rename(columns=({'dateUserTz_3pm':'dateUserTz'}),inplace=True)
+
+    df_user_locations_day = create_user_location_date_df(user_id)
+    df_weather_history = create_df_weather_history()
+
+
+    # Step 2: Perform a left join to merge while keeping all rows from user_locations_day_df
+    df_daily_cloudcover = pd.merge(df_user_locations_day, df_weather_history[['date_time', 'location_id', 'cloudcover']],
+                        on=['date_time', 'location_id'], how='left')
+
+    df_daily_cloudcover.rename(columns=({'date_time':'dateUserTz'}),inplace=True)
+
+
+    df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, df_daily_cloudcover[['dateUserTz','cloudcover']],
+                                          on=['dateUserTz'],how='left')
+                                          
+    correlation = df_daily_sleep_time_cloudcover['cloudcover'].corr(df_daily_sleep_time_cloudcover['sleepTimeUserTz'])
+
+    # TODO: Remove n/a's

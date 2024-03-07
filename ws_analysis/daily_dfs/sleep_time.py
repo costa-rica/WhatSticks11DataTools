@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 import pytz
 
 
-# Function to run to get table of sleep time
+# Note: "df" parameter is strictly df from create_user_qty_cat_df
 def create_df_daily_sleep(df):
     logger_ws_analysis.info("- in create_df_daily_sleep")
     df_sleep = df[df['sampleType']=='HKCategoryTypeIdentifierSleepAnalysis'].copy()

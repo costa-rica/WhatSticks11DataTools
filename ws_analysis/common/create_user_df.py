@@ -144,3 +144,12 @@ def create_user_workouts_df(user_id):
         logger_ws_analysis.info(f"An error occurred (in send_data_source_objects): {e}")
         return "insufficient data", "insufficient data"
     
+
+def create_user_location_date_df(user_id):
+    logger_ws_analysis.info("- in create_user_location_date_df")
+    user_locations_day_query = sess.query(UserLocationDay).filter_by(user_id = user_id)
+    user_locations_day_df = pd.read_sql(user_locations_day_query.statement, engine)
+    user_locations_day_df.rename(columns={'date_utc_user_check_in': 'date_time'},inplace=True)
+
+    return user_locations_day_df[['date_time','location_id']]
+
