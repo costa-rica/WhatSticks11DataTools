@@ -9,8 +9,9 @@ from .daily_dfs.heart_rate import create_df_daily_heart_rate, \
 from .daily_dfs.workouts import create_df_daily_workout_duration, \
     create_df_daily_workout_duration_dummies
 from .correlation_dfs.dep_var_sleep import corr_sleep_steps, \
-    corr_sleep_heart_rate, corr_sleep_workouts, corr_sleep_workout_dummies
+    corr_sleep_heart_rate, corr_sleep_workouts, corr_sleep_workout_dummies, \
+    corr_sleep_cloudiness
 from .correlation_dfs.dep_var_workouts import corr_workouts_sleep, \
     corr_workouts_steps, corr_workouts_heart_rate
-from .daily_dfs.weather import create_df_daily_cloudiness
+from .daily_dfs.weather import create_df_weather_history
 
