@@ -122,6 +122,47 @@ def update_and_append_via_df_crosswalk_users(table_name,zip_filename,df_crosswal
     return count_of_rows_added
 
 
+def update_and_append_via_df_crosswalk_locations(table_name, id_column_name, zip_filename,df_crosswalk_locations):
+    logger_ws_utilities.info("- accessed: ws_utlitiles/api/admin.py update_and_append_via_df_crosswalk_locations ")
+    # Step 1: create df_from_dict from zip file in db_upload
+    zip_path = f"{config.DB_UPLOAD}/{zip_filename}"
+    dataframes_dict = read_files_into_dict(zip_path)
+    df_from_dict = dataframes_dict.get(table_name)
+
+    # Step 2: using df_crosswalk_users update the user_id column
+    # The map will have old user_id as index (id) and new user_id as values (new_id)
+    user_id_map = df_crosswalk_locations.set_index('id')['new_id']
+    # Update df_from_dict.user_id by mapping using the user_id_map
+    df_from_dict[id_column_name] = df_from_dict[id_column_name].map(user_id_map)
+
+    # Step 3: remove user_id == Nan rows, these are rows that have user_ids that are no longer matched to accounts.
+    ## ---> users have deleted accounts, but for some reason corresponding data was not deleted.
+    df_from_dict_no_nans = df_from_dict.dropna(subset=[id_column_name])
+
+    # # Step 4: remove any duplicate rows - Drop duplicates based on unique constraint
+    unique_constraint_column_names_list = ['location_id', 'date_time']
+    df_from_dict_no_nans.drop_duplicates(subset=unique_constraint_column_names_list, inplace=True)
+
+    # Step 5: Get existing data from database make df, combine new data with existing data, verify no duplicates in combined df
+    ## - drop column id
+    df_from_dict_no_nans.drop(columns=['id'], inplace=True)
+    df_from_dict_no_nans[id_column_name] = df_from_dict_no_nans[id_column_name].astype('int64')
+
+    df_from_db_weather_hist = create_df_from_db_table_name(table_name)
+    df_from_db_weather_hist.drop(columns=['id'], inplace=True)
+
+    ### Here this stpe needs to remove all rows in df_from_dict_no_nans that are already in df_from_db_<table_name>
+    df_from_dict_unique_new = remove_matching_rows(df_from_dict_no_nans, df_from_db_weather_hist, unique_constraint_column_names_list)
+
+
+    #Step 6: Add data
+    count_of_rows_added = df_from_dict_unique_new.to_sql(table_name, con=engine, if_exists='append', index=False)
+    
+    logger_ws_utilities.info(f"- successfully added {count_of_rows_added:,} rows to {table_name} table ")
+    
+    return count_of_rows_added
+
+
 
 
 ####################################
@@ -189,4 +230,8 @@ def get_class_from_tablename(tablename):
     if c.__tablename__ == tablename:
       return c
 
-
+def create_df_from_db_table_name(table_name):
+    sqlalchemy_table_object = get_class_from_tablename(table_name)
+    df_db_query = sess.query(sqlalchemy_table_object)
+    df_from_db = pd.read_sql(df_db_query.statement, engine)
+    return df_from_db
