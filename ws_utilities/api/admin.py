@@ -100,26 +100,33 @@ def update_and_append_via_df_crosswalk_users(table_name,zip_filename,df_crosswal
     ## - drop column id
     df_from_dict_no_nans.drop(columns=['id'], inplace=True)
     
-    ############################################################################################################
-    # TODO: Fix references to AppleHealthWorkout and df_from_db_workouts <---------------- !!!!
     ## - combine existing data from db to df_from_dict_no_nans and then go to Step 5
     table_object = get_class_from_tablename(table_name)
     # df_from_db_workouts = create_df_from_db_table(AppleHealthWorkout)
     df_from_db = create_df_from_db_table(table_object)
     df_from_db.drop(columns=['id'], inplace=True)
+    
+    # if df_from_dict_no_nans is empty by now, then there is no need to do any more because all the data was duplicates
 
-    ### Here this stpe needs to remove all rows in df_from_dict_no_nans that are already in df_from_db_workouts
-    # Potentially could be done with:
-    df_from_dict_unique_new = remove_matching_rows(df_from_dict_no_nans, df_from_db, unique_constraint_column_names_list)
+    if len(df_from_dict_no_nans) > 0:
 
-    ############## END Fix ######################################################
+        df_from_dict_unique_new = df_from_dict_no_nans
 
-    #Step 6: Add data
-    count_of_rows_added = df_from_dict_unique_new.to_sql(table_name, con=engine, if_exists='append', index=False)
+        if len(df_from_db) > 0:
+            ### Here this stpe needs to remove all rows in df_from_dict_no_nans that are already in df_from_db_workouts
+            # Potentially could be done with:
+            df_from_dict_unique_new = remove_matching_rows(df_from_dict_no_nans, df_from_db, unique_constraint_column_names_list)
 
-    logger_ws_utilities.info(f"- successfully added {count_of_rows_added:,} rows to {table_name} table ")
+        #Step 6: Add data
+        count_of_rows_added = df_from_dict_unique_new.to_sql(table_name, con=engine, if_exists='append', index=False)
 
-    return count_of_rows_added
+        logger_ws_utilities.info(f"- successfully added {count_of_rows_added:,} rows to {table_name} table ")
+
+        return count_of_rows_added
+
+    logger_ws_utilities.info(f"- No rows added to {table_name} table because data was all duplicates")
+    
+    return 0
 
 
 def update_and_append_via_df_crosswalk_locations(table_name, id_column_name, zip_filename,df_crosswalk_locations):
@@ -131,9 +138,9 @@ def update_and_append_via_df_crosswalk_locations(table_name, id_column_name, zip
 
     # Step 2: using df_crosswalk_users update the user_id column
     # The map will have old user_id as index (id) and new user_id as values (new_id)
-    user_id_map = df_crosswalk_locations.set_index('id')['new_id']
-    # Update df_from_dict.user_id by mapping using the user_id_map
-    df_from_dict[id_column_name] = df_from_dict[id_column_name].map(user_id_map)
+    location_id_map = df_crosswalk_locations.set_index('id')['new_id']
+    # Update df_from_dict.user_id by mapping using the location_id_map
+    df_from_dict[id_column_name] = df_from_dict[id_column_name].map(location_id_map)
 
     # Step 3: remove user_id == Nan rows, these are rows that have user_ids that are no longer matched to accounts.
     ## ---> users have deleted accounts, but for some reason corresponding data was not deleted.
@@ -150,20 +157,75 @@ def update_and_append_via_df_crosswalk_locations(table_name, id_column_name, zip
 
     df_from_db_weather_hist = create_df_from_db_table_name(table_name)
     df_from_db_weather_hist.drop(columns=['id'], inplace=True)
-
-    ### Here this stpe needs to remove all rows in df_from_dict_no_nans that are already in df_from_db_<table_name>
-    df_from_dict_unique_new = remove_matching_rows(df_from_dict_no_nans, df_from_db_weather_hist, unique_constraint_column_names_list)
-
-
-    #Step 6: Add data
-    count_of_rows_added = df_from_dict_unique_new.to_sql(table_name, con=engine, if_exists='append', index=False)
     
-    logger_ws_utilities.info(f"- successfully added {count_of_rows_added:,} rows to {table_name} table ")
+    # if df_from_dict_no_nans is empty by now, then there is no need to do any more because all the data was duplicates
+    if len(df_from_dict_no_nans) > 0:
+
+        df_from_dict_unique_new = df_from_dict_no_nans
+
+        if len(df_from_db_weather_hist) > 0:
+            ### Here this stpe needs to remove all rows in df_from_dict_no_nans that are already in df_from_db_<table_name>
+            df_from_dict_unique_new = remove_matching_rows(df_from_dict_no_nans, df_from_db_weather_hist, unique_constraint_column_names_list)
+
+
+        #Step 6: Add data
+        count_of_rows_added = df_from_dict_unique_new.to_sql(table_name, con=engine, if_exists='append', index=False)
+        
+        logger_ws_utilities.info(f"- successfully added {count_of_rows_added:,} rows to {table_name} table ")
+        
+        return count_of_rows_added
+    logger_ws_utilities.info(f"- No rows added to {table_name} table because data was all duplicates")
     
-    return count_of_rows_added
+    return 0
 
 
 
+
+def update_and_append_user_location_day(zip_filename,df_crosswalk_users,df_crosswalk_locations):
+    logger_ws_utilities.info("- accessed: ws_utlitiles/api/admin.py update_and_append_user_location_day ")
+    
+    table_name = 'user_location_day'
+    
+    # Step 2: create df_from_dict from zip file in db_upload
+    zip_path = f"{config.DB_UPLOAD}/{zip_filename}"
+    dataframes_dict = read_files_into_dict(zip_path)
+    df_from_dict = dataframes_dict.get(table_name)
+
+    # Step 3: update/map user_id
+    user_id_map = df_crosswalk_users.set_index('id')['new_id']
+    df_from_dict['user_id'] = df_from_dict['user_id'].map(user_id_map)
+
+    # Step 3 b: remove user_id == Nan rows
+    df_from_dict_no_nans_01 = df_from_dict.dropna(subset=['user_id'])
+    
+    # Step 4: update/map location_id
+    location_id_map = df_crosswalk_locations.set_index('id')['new_id']
+    df_from_dict_no_nans_01['location_id'] = df_from_dict_no_nans_01['location_id'].map(location_id_map)
+    # Step 4 b: remove location_id == Nan rows
+    df_from_dict_no_nans_02 = df_from_dict_no_nans_01.dropna(subset=['location_id'])
+
+    # Step 5: create df_from_db
+    df_from_db = create_df_from_db_table_name(table_name)
+
+    # Step 6:
+    # if df_from_dict_no_nans_02 is empty by now, then there is no need to do any more because all the data was duplicates
+    if len(df_from_dict_no_nans_02) > 0:
+        df_from_dict_unique_new = df_from_dict_no_nans_02
+        # Step 6: remove existing rows based on user_id, date_utc_user_check_in
+        if len(df_from_db) > 0:
+            unique_constraint_column_names_list = ['user_id', 'date_utc_user_check_in']
+            df_from_dict_unique_new = remove_matching_rows(df_from_dict_no_nans_02, df_from_db, unique_constraint_column_names_list)
+
+        #Step 7: Add data
+        count_of_rows_added = df_from_dict_unique_new.to_sql(table_name, con=engine, if_exists='append', index=False)
+
+        logger_ws_utilities.info(f"- successfully added {count_of_rows_added:,} rows to {table_name} table ")
+        
+        return count_of_rows_added
+        
+    logger_ws_utilities.info(f"- No rows added to {table_name} table because data was all duplicates")
+    
+    return 0
 
 ####################################
 # Utilities to create df_crosswalk #
