@@ -11,46 +11,43 @@ from ..common.config_and_logger import config, logger_ws_utilities
 def create_df_crosswalk(table_name_for_crosswalk, zip_filename):
     logger_ws_utilities.info("- accessed: ws_utlitiles/api/admin.py create_df_crosswalk_users ")
     # Step1: Make dictioanry of all the dataframes of new data
-    # Path to the ZIP file
-    # zip_path = f"{config.DB_UPLOAD}/localWS11_backup.zip"
     zip_path = f"{config.DB_UPLOAD}/{zip_filename}"
 
     # Read files into dictionary
     dataframes_dict = read_files_into_dict(zip_path)
 
     # Step 2: create df_crosswalk_users w/ columns 'id', 'lat', 'lon'
-    # table_name_for_crosswalk = 'locations'
     if table_name_for_crosswalk == 'locations':
         df_crosswalk = dataframes_dict.get(table_name_for_crosswalk)[['id', 'lat','lon']].copy()
-        # df_db_query = sess.query(Locations)
-        table_object = Locations
         columns_match_list = ['lat','lon']
     elif table_name_for_crosswalk == 'users':
         df_crosswalk = dataframes_dict.get(table_name_for_crosswalk)[['id', 'email']].copy()
-        # df_db_query = sess.query(Users)
-        table_object = Users
         columns_match_list = ['email']
 
     # Step 3: create df_locations from database
-    df_db_query = sess.query(table_object)
-    df_from_db = pd.read_sql(df_db_query.statement, engine)
+    df_from_db = create_df_from_db_table_name(table_name_for_crosswalk)
 
-    # Step 4: Assign the df_from_dict
+    # Step 4: Remove columns not in database
+    new_data_column_names = dataframes_dict.get(table_name_for_crosswalk).columns
+    for col_name in new_data_column_names:
+        if col_name not in df_from_db.columns:
+            dataframes_dict.get(table_name_for_crosswalk).drop(columns=col_name, inplace=True)
+
+    # Step 5: Assign the df_from_dict
     if len(df_from_db) == 0:
         df_from_dict = dataframes_dict.get(table_name_for_crosswalk)
-    else:
-        # Step 4a: remove matching rows, if any rows exist in the database already
+    elif len(dataframes_dict.get(table_name_for_crosswalk)) > 0:
+        # Step 5a: remove matching rows, if any rows exist in the database already
         df_from_dict = remove_matching_rows(dataframes_dict.get(table_name_for_crosswalk), df_from_db, columns_match_list)
 
-    # Step 5: add df_locations to Locations table
-    count_of_rows_added = df_from_dict.to_sql(table_name_for_crosswalk, con=engine, if_exists='append', index=False)
-    logger_ws_utilities.info(f"- count_of_rows_added: {count_of_rows_added} ")
+        # Step 6: add df_locations to Locations table
+        count_of_rows_added = df_from_dict.to_sql(table_name_for_crosswalk, con=engine, if_exists='append', index=False)
+        logger_ws_utilities.info(f"- count_of_rows_added: {count_of_rows_added} ")
 
     # recreate df_users with all the new users added
-    df_db_query = sess.query(table_object)
-    df_from_db = pd.read_sql(df_db_query.statement, engine)
+    df_from_db = create_df_from_db_table_name(table_name_for_crosswalk)
 
-    # Step 8: append to crosswalk
+    # Step 7: append to crosswalk
     if table_name_for_crosswalk == "locations":
         # Perform the merge on 'lat' and 'lon' columns
         df_crosswalk = pd.merge(
@@ -71,10 +68,13 @@ def create_df_crosswalk(table_name_for_crosswalk, zip_filename):
 
     return df_crosswalk
 
-
-# TODO rename this function when df_crosswalk_location is added
 def update_and_append_via_df_crosswalk_users(table_name,zip_filename,df_crosswalk_users):
     logger_ws_utilities.info("- accessed: ws_utlitiles/api/admin.py update_and_append_via_df_crosswalk_users ")
+
+    if len(df_crosswalk_users) == 0:
+        logger_ws_utilities.info("- No rows in df_crosswalk_users -> likely due to no users found in zip file or no different user_ids.")
+        return 0
+
     # Step 1: create df_from_dict from zip file in db_upload
     zip_path = f"{config.DB_UPLOAD}/{zip_filename}"
     dataframes_dict = read_files_into_dict(zip_path)
@@ -128,9 +128,13 @@ def update_and_append_via_df_crosswalk_users(table_name,zip_filename,df_crosswal
     
     return 0
 
-
 def update_and_append_via_df_crosswalk_locations(table_name, id_column_name, zip_filename,df_crosswalk_locations):
     logger_ws_utilities.info("- accessed: ws_utlitiles/api/admin.py update_and_append_via_df_crosswalk_locations ")
+
+    if len(df_crosswalk_locations) == 0:
+        logger_ws_utilities.info("- No rows in df_crosswalk_locations -> likely due to no locations found in zip file or no different location_ids.")
+        return 0
+
     # Step 1: create df_from_dict from zip file in db_upload
     zip_path = f"{config.DB_UPLOAD}/{zip_filename}"
     dataframes_dict = read_files_into_dict(zip_path)
@@ -178,9 +182,6 @@ def update_and_append_via_df_crosswalk_locations(table_name, id_column_name, zip
     
     return 0
 
-
-
-
 def update_and_append_user_location_day(zip_filename,df_crosswalk_users,df_crosswalk_locations):
     logger_ws_utilities.info("- accessed: ws_utlitiles/api/admin.py update_and_append_user_location_day ")
     
@@ -191,18 +192,30 @@ def update_and_append_user_location_day(zip_filename,df_crosswalk_users,df_cross
     dataframes_dict = read_files_into_dict(zip_path)
     df_from_dict = dataframes_dict.get(table_name)
 
-    # Step 3: update/map user_id
-    user_id_map = df_crosswalk_users.set_index('id')['new_id']
-    df_from_dict['user_id'] = df_from_dict['user_id'].map(user_id_map)
+    if len(df_crosswalk_users) > 0:
 
-    # Step 3 b: remove user_id == Nan rows
-    df_from_dict_no_nans_01 = df_from_dict.dropna(subset=['user_id'])
-    
-    # Step 4: update/map location_id
-    location_id_map = df_crosswalk_locations.set_index('id')['new_id']
-    df_from_dict_no_nans_01['location_id'] = df_from_dict_no_nans_01['location_id'].map(location_id_map)
-    # Step 4 b: remove location_id == Nan rows
-    df_from_dict_no_nans_02 = df_from_dict_no_nans_01.dropna(subset=['location_id'])
+        # Step 3: update/map user_id
+        user_id_map = df_crosswalk_users.set_index('id')['new_id']
+        df_from_dict['user_id'] = df_from_dict['user_id'].map(user_id_map)
+
+        # Step 3 b: remove user_id == Nan rows
+        df_from_dict_no_nans_01 = df_from_dict.dropna(subset=['user_id'])
+    else:
+        df_from_dict_no_nans_01 = df_from_dict
+        logger_ws_utilities.info("- No user_ids to adjust ")
+
+    if len(df_crosswalk_locations) > 0:
+
+        # Step 4: update/map location_id
+        location_id_map = df_crosswalk_locations.set_index('id')['new_id']
+        df_from_dict_no_nans_01['location_id'] = df_from_dict_no_nans_01['location_id'].map(location_id_map)
+        # Step 4 b: remove location_id == Nan rows
+        df_from_dict_no_nans_02 = df_from_dict_no_nans_01.dropna(subset=['location_id'])
+
+    else:
+        df_from_dict_no_nans_02 = df_from_dict_no_nans_01
+        logger_ws_utilities.info("- No location_ids to adjust ")
+
 
     # Step 5: create df_from_db
     df_from_db = create_df_from_db_table_name(table_name)
@@ -258,7 +271,6 @@ def read_files_into_dict(zip_path):
     
     return dfs
 
-
 def remove_matching_rows(df_from_dict, df_from_db, match_columns):
     # df_from_dict: all rows downloaded
     # df_from db: rows currently in database
@@ -280,7 +292,6 @@ def remove_matching_rows(df_from_dict, df_from_db, match_columns):
     df_from_dict.drop(columns=columns_to_drop, inplace=True)
     
     return df_from_dict
-
 
 def create_df_from_db_table(sqlalchemy_table_object):
     df_db_query = sess.query(sqlalchemy_table_object)
