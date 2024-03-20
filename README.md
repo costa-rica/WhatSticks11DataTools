@@ -59,16 +59,27 @@ For any queries or suggestions, please contact us at nrodrig1@gmail.com.
 
 ## Documentation
 
-### ws_utilities/api/admin.py
+### ws_utilities/web/admin.py
 - The website upload .zip uses a sequence of functions found in ws_utilites/api/admin.py. Important to note, even if no new users are added, the creation of a crosswalk table (df_crosswalk_users) will still create a df (df_crosswalk_users) that provides a mapping from existing user_ids to the user_ids found in the .zip file. Then convert the ones user_ids from the .zip file and append to the database correctly.
 
-- TODO: We have to verify this is the case with location_id but since location_id also uses the same function ( create_df_crosswalk) it is likely the case that at least as long as new ids are present a df_crosswalk table will be created and new data will be added.
+#### create_df_crosswalk
+- even if zip file has no new id's in users of locations it a df_crosswalk will be created
 
-- TODO: We have to verify that if ids (user, location) in .zip file are still the same as they are in the database will any new data from the .zip file be appended?
+
+### ws_utilities/scheduler/main.py
+interpolate_missing_dates_exclude_references
+- TODO: (possible remove?) This checks for gaps in a user's UserLocationDay. If there it is it fills it in. However, I beleive we don't need this because the ws_analysis (create_df_daily_user_location_consecutive) takes care of any gaps in a user's UserLocationDay.
+- This is used by WS11Scheduler. consider removing this process as it's unnecessary.
+
 
 ### ws_analysis/create_user_df.py
 create_df_daily_user_location_consecutive 
+- purpose: used to create a user's daily location_id so that weather correlations can be calculated.
 - parameters: 
   - start_date: string in format `%Y-%m-%d`
   - end_date: string in format `%Y-%m-%d`
   - df_daily_user_location: This is a dataframe of UserLocationDay table filtered on one user. Columns are only: date (datetime.date), location_id (integer). No duplicate date rows.
+
+
+
+

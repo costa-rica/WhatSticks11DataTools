@@ -9,7 +9,14 @@ from ..common.config_and_logger import config, logger_ws_utilities
 
 # def create_df_crosswalk(table_name, zip_filename):
 def create_df_crosswalk(table_name_for_crosswalk, zip_filename):
+
+    ########################################################################################
+    # even if zip file has no new id's in it a df_crosswalk will be created
+    # even if zip file has no new id's but new data
+    ##########################################################################################
+
     logger_ws_utilities.info("- accessed: ws_utlitiles/api/admin.py create_df_crosswalk_users ")
+    logger_ws_utilities.info(f"- creating crosswalk for {table_name_for_crosswalk} ")
     # Step1: Make dictioanry of all the dataframes of new data
     zip_path = f"{config.DB_UPLOAD}/{zip_filename}"
 
@@ -20,30 +27,37 @@ def create_df_crosswalk(table_name_for_crosswalk, zip_filename):
     if table_name_for_crosswalk == 'locations':
         df_crosswalk = dataframes_dict.get(table_name_for_crosswalk)[['id', 'lat','lon']].copy()
         columns_match_list = ['lat','lon']
+        logger_ws_utilities.info(f"- rows found in NEW/dict locations: {len(df_crosswalk)} ")
     elif table_name_for_crosswalk == 'users':
         df_crosswalk = dataframes_dict.get(table_name_for_crosswalk)[['id', 'email']].copy()
         columns_match_list = ['email']
-
+    
     # Step 3: create df_locations from database
     df_from_db = create_df_from_db_table_name(table_name_for_crosswalk)
-
+    logger_ws_utilities.info(f"- rows found in EXISTING/db locations: {len(df_from_db)} ")
     # Step 4: Remove columns not in database
     new_data_column_names = dataframes_dict.get(table_name_for_crosswalk).columns
     for col_name in new_data_column_names:
         if col_name not in df_from_db.columns:
             dataframes_dict.get(table_name_for_crosswalk).drop(columns=col_name, inplace=True)
 
+    
     # Step 5: Assign the df_from_dict
     if len(df_from_db) == 0:
         df_from_dict = dataframes_dict.get(table_name_for_crosswalk)
-    elif len(dataframes_dict.get(table_name_for_crosswalk)) > 0:
+    # elif len(dataframes_dict.get(table_name_for_crosswalk)) > 0:
+    elif len(df_from_db) > 0:
         # Step 5a: remove matching rows, if any rows exist in the database already
         df_from_dict = remove_matching_rows(dataframes_dict.get(table_name_for_crosswalk), df_from_db, columns_match_list)
 
-        # Step 6: add df_locations to Locations table
-        count_of_rows_added = df_from_dict.to_sql(table_name_for_crosswalk, con=engine, if_exists='append', index=False)
-        logger_ws_utilities.info(f"- count_of_rows_added: {count_of_rows_added} ")
+    
 
+    # Step 6: add df_locations to Locations table
+    count_of_rows_added = df_from_dict.to_sql(table_name_for_crosswalk, con=engine, if_exists='append', index=False)
+    logger_ws_utilities.info(f"- count_of_rows_added: {count_of_rows_added} ")
+    
+    logger_ws_utilities.info(f"- rows found in df_from_dict: {len(df_from_dict)} ")
+    
     # recreate df_users with all the new users added
     df_from_db = create_df_from_db_table_name(table_name_for_crosswalk)
 
@@ -64,8 +78,17 @@ def create_df_crosswalk(table_name_for_crosswalk, zip_filename):
     # Rename the 'id_new' column to 'new_id'
     df_crosswalk.rename(columns={'id_new': 'new_id'}, inplace=True)
 
-    logger_ws_utilities.info(f"- completed df_crosswalk for : {table_name_for_crosswalk} ")
+    if len(df_from_dict) > 0:
+        # Step 8: add indicator for new user/location
+        df_from_dict['new_row']='yes'
+        df_from_dict.rename(columns={'id': 'new_id'}, inplace=True)
 
+        df_crosswalk_with_new_row_indicator = pd.merge(df_crosswalk,df_from_dict[['new_id','new_row']],
+                                                            on=['new_id'],how='left', suffixes=('', '_new'))
+
+        logger_ws_utilities.info(f"- completed df_crosswalk for : {table_name_for_crosswalk} ")
+        return df_crosswalk_with_new_row_indicator
+    logger_ws_utilities.info(f"- completed df_crosswalk for : {table_name_for_crosswalk} ")
     return df_crosswalk
 
 def update_and_append_via_df_crosswalk_users(table_name,zip_filename,df_crosswalk_users):
@@ -78,7 +101,13 @@ def update_and_append_via_df_crosswalk_users(table_name,zip_filename,df_crosswal
     # Step 1: create df_from_dict from zip file in db_upload
     zip_path = f"{config.DB_UPLOAD}/{zip_filename}"
     dataframes_dict = read_files_into_dict(zip_path)
-    df_from_dict = dataframes_dict.get(table_name)
+    # df_from_dict = dataframes_dict.get(table_name)
+    try:
+        df_from_dict = dataframes_dict[table_name]
+    except Exception as e:
+        logger_ws_utilities.info(f"{type(e).__name__}: {e}")
+        logger_ws_utilities.info(f"- If KeyError, most likely due to no new data for {table_name} table in .zip file")
+        return 0
 
     # Step 2: using df_crosswalk_users update the user_id column
     # The map will have old user_id as index (id) and new user_id as values (new_id)
@@ -138,7 +167,13 @@ def update_and_append_via_df_crosswalk_locations(table_name, id_column_name, zip
     # Step 1: create df_from_dict from zip file in db_upload
     zip_path = f"{config.DB_UPLOAD}/{zip_filename}"
     dataframes_dict = read_files_into_dict(zip_path)
-    df_from_dict = dataframes_dict.get(table_name)
+    # df_from_dict = dataframes_dict.get(table_name)
+    try:
+        df_from_dict = dataframes_dict[table_name]
+    except Exception as e:
+        logger_ws_utilities.info(f"{type(e).__name__}: {e}")
+        logger_ws_utilities.info(f"- If KeyError, most likely due to no new data for {table_name} table in .zip file")
+        return 0
 
     # Step 2: using df_crosswalk_users update the user_id column
     # The map will have old user_id as index (id) and new user_id as values (new_id)
@@ -190,7 +225,12 @@ def update_and_append_user_location_day(zip_filename,df_crosswalk_users,df_cross
     # Step 2: create df_from_dict from zip file in db_upload
     zip_path = f"{config.DB_UPLOAD}/{zip_filename}"
     dataframes_dict = read_files_into_dict(zip_path)
-    df_from_dict = dataframes_dict.get(table_name)
+    try:
+        df_from_dict = dataframes_dict[table_name]
+    except Exception as e:
+        logger_ws_utilities.info(f"{type(e).__name__}: {e}")
+        logger_ws_utilities.info(f"- If KeyError, most likely due to no new data for {table_name} table in .zip file")
+        return 0
 
     if len(df_crosswalk_users) > 0:
 
