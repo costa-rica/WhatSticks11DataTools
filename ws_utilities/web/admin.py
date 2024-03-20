@@ -16,7 +16,7 @@ def create_df_crosswalk(table_name_for_crosswalk, zip_filename):
     ##########################################################################################
 
     logger_ws_utilities.info("- accessed: ws_utlitiles/api/admin.py create_df_crosswalk_users ")
-    logger_ws_utilities.info(f"- creating crosswalk for {table_name_for_crosswalk} ")
+    logger_ws_utilities.info(f"--- creating crosswalk for {table_name_for_crosswalk} ---")
     # Step1: Make dictioanry of all the dataframes of new data
     zip_path = f"{config.DB_UPLOAD}/{zip_filename}"
 
@@ -50,8 +50,6 @@ def create_df_crosswalk(table_name_for_crosswalk, zip_filename):
         # Step 5a: remove matching rows, if any rows exist in the database already
         df_from_dict = remove_matching_rows(dataframes_dict.get(table_name_for_crosswalk), df_from_db, columns_match_list)
 
-    
-
     # Step 6: add df_locations to Locations table
     count_of_rows_added = df_from_dict.to_sql(table_name_for_crosswalk, con=engine, if_exists='append', index=False)
     logger_ws_utilities.info(f"- count_of_rows_added: {count_of_rows_added} ")
@@ -83,11 +81,22 @@ def create_df_crosswalk(table_name_for_crosswalk, zip_filename):
         df_from_dict['new_row']='yes'
         df_from_dict.rename(columns={'id': 'new_id'}, inplace=True)
 
-        df_crosswalk_with_new_row_indicator = pd.merge(df_crosswalk,df_from_dict[['new_id','new_row']],
+        logger_ws_utilities.info(f"df_from_dict length: {len(df_from_dict)} ")
+        logger_ws_utilities.info(f"df_from_dict columns: {list(df_from_dict.columns)} ")
+        logger_ws_utilities.info(f"df_crosswalk length: {len(df_crosswalk)} ")
+        logger_ws_utilities.info(f"df_crosswalk columns: {list(df_crosswalk.columns)} ")
+
+        if table_name_for_crosswalk == "locations":
+            df_crosswalk_with_new_row_indicator = pd.merge(df_crosswalk,df_from_dict[['new_id','new_row']],
                                                             on=['new_id'],how='left', suffixes=('', '_new'))
+        elif table_name_for_crosswalk == "users":
+            # df_from_dict will does not have id or new_id so merge on email
+            df_crosswalk_with_new_row_indicator = pd.merge(df_crosswalk,df_from_dict[['email','new_row']],
+                                                                on=['email'],how='left', suffixes=('', '_new'))
 
         logger_ws_utilities.info(f"- completed df_crosswalk for : {table_name_for_crosswalk} ")
         return df_crosswalk_with_new_row_indicator
+        
     logger_ws_utilities.info(f"- completed df_crosswalk for : {table_name_for_crosswalk} ")
     return df_crosswalk
 
