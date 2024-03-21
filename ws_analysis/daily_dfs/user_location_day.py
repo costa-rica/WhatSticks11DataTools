@@ -1,9 +1,6 @@
 from ..common.config_and_logger import config, logger_ws_analysis
 import pandas as pd
-from ws_models import engine, sess, WeatherHistory
-from ws_models import sess, engine, Users, UserLocationDay, Locations
 import datetime
-
 
 
 def create_df_daily_user_location_consecutive(start_date, end_date, df_daily_user_location):
