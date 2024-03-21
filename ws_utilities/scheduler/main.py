@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import os
 import pandas as pd
 import time
-from ws_models import sess, engine, Users, WeatherHistory, Locations, UserLocationDay
+from ws_models import session_scope, engine, Users, WeatherHistory, Locations, UserLocationDay
 from ..common.config_and_logger import config, logger_ws_utilities
 
 def interpolate_missing_dates_exclude_references(df):
@@ -89,9 +89,10 @@ def add_weather_history(location_id, weather_data):
             icon=day.get('icon'),
             time_stamp_utc=datetime.utcnow()
         )
-        sess.add(weather_history)
+        with session_scope() as session:
+            session.add(weather_history)
     logger_ws_utilities.info(f"weather_history: {weather_history}")
     # Commit the session to save these objects to the database
-    sess.commit()
+    
 
 

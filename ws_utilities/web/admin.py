@@ -2,7 +2,7 @@ import os
 import pandas as pd
 import zipfile
 import shutil
-from ws_models import Base, sess, engine, Users, AppleHealthWorkout, AppleHealthQuantityCategory,  UserLocationDay, \
+from ws_models import Base, session_scope, engine, Users, AppleHealthWorkout, AppleHealthQuantityCategory,  UserLocationDay, \
     Locations, WeatherHistory
 from ..common.config_and_logger import config, logger_ws_utilities
 
@@ -343,9 +343,13 @@ def remove_matching_rows(df_from_dict, df_from_db, match_columns):
     return df_from_dict
 
 def create_df_from_db_table(sqlalchemy_table_object):
-    df_db_query = sess.query(sqlalchemy_table_object)
-    df_from_db = pd.read_sql(df_db_query.statement, engine)
-    return df_from_db
+
+    with session_scope() as session:
+        df_db_query = session.query(sqlalchemy_table_object)
+        df_from_db = pd.read_sql(df_db_query.statement, engine)
+        return df_from_db
+
+
 
 def get_class_from_tablename(tablename):
   for c in Base.__subclasses__():
@@ -354,6 +358,7 @@ def get_class_from_tablename(tablename):
 
 def create_df_from_db_table_name(table_name):
     sqlalchemy_table_object = get_class_from_tablename(table_name)
-    df_db_query = sess.query(sqlalchemy_table_object)
-    df_from_db = pd.read_sql(df_db_query.statement, engine)
-    return df_from_db
+    with session_scope() as session:
+        df_db_query = session.query(sqlalchemy_table_object)
+        df_from_db = pd.read_sql(df_db_query.statement, engine)
+        return df_from_db

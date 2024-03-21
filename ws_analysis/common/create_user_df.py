@@ -4,7 +4,7 @@ from .utilities import convert_to_user_tz, get_dateUserTz_3pm, \
     create_pickle_apple_workouts_path_and_name, \
     adjust_timezone, add_timezones_from_UserLocationDay
 import pandas as pd
-from ws_models import engine, sess, Users, UserLocationDay, Locations
+from ws_models import engine, session_scope, Users, UserLocationDay, Locations
 from datetime import datetime
 import pytz
 import os
@@ -17,6 +17,7 @@ import os
 
 # def create_user_qty_cat_df(user_id, user_tz_str='Europe/Paris'):
 def create_user_qty_cat_df(user_id):
+    
     # Query data from database into pandas dataframe
     logger_ws_analysis.info("- in create_user_qty_cat_df -")
     pickle_apple_qty_cat_path_and_name = create_pickle_apple_qty_cat_path_and_name(user_id)
@@ -28,7 +29,8 @@ def create_user_qty_cat_df(user_id):
         query = f"SELECT * FROM apple_health_quantity_category WHERE user_id = {user_id}"
         df = pd.read_sql_query(query, engine)
     logger_ws_analysis.info(f"user_id: {user_id}")
-    user_tz_str = sess.get(Users,user_id).timezone
+    with session_scope() as session:
+        user_tz_str = session.get(Users,user_id).timezone
 
     if user_tz_str == None or user_tz_str == "":
         logger_ws_analysis.info(f"- Error: ws_analysis/common/create_user_df.py/create_user_qty_cat_df --> user_tz_str is None or blank -")
@@ -88,6 +90,7 @@ def create_user_qty_cat_df(user_id):
 
 def create_user_workouts_df(user_id):
     logger_ws_analysis.info("- in create_user_workouts_df -")
+    
     # Query data from database into pandas dataframe
     # user_id=user_id
     pickle_apple_workouts_path_and_name = create_pickle_apple_workouts_path_and_name(user_id)
@@ -98,8 +101,8 @@ def create_user_workouts_df(user_id):
     else:
         query = f"SELECT * FROM apple_health_workout WHERE user_id = {user_id}"
         df = pd.read_sql_query(query, engine)
-    
-    user_tz_str = sess.get(Users,user_id).timezone
+    with session_scope() as session:
+        user_tz_str = session.get(Users,user_id).timezone
     if user_tz_str == None or user_tz_str == "":
         logger_ws_analysis.info(f"- Error: ws_analysis/common/create_user_df.py/create_user_qty_cat_df --> user_tz_str is None or blank -")
     
@@ -147,7 +150,8 @@ def create_user_workouts_df(user_id):
 
 def create_user_location_date_df(user_id):
     logger_ws_analysis.info("- in create_user_location_date_df")
-    user_locations_day_query = sess.query(UserLocationDay).filter_by(user_id = user_id)
+    with session_scope() as session:
+        user_locations_day_query = session.query(UserLocationDay).filter_by(user_id = user_id)
     user_locations_day_df = pd.read_sql(user_locations_day_query.statement, engine)
     user_locations_day_df.rename(columns={'date_utc_user_check_in': 'date_time'},inplace=True)
 

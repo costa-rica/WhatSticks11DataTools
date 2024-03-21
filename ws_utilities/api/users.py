@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 import os
 import pandas as pd
 import time
-from ws_models import sess, engine, Users, WeatherHistory, Locations, UserLocationDay
+from ws_models import session_scope, engine, Users, WeatherHistory, Locations, UserLocationDay
 from ..common.config_and_logger import config, logger_ws_utilities
 from timezonefinder import TimezoneFinder
 from ..scheduler.main import add_weather_history
@@ -71,7 +71,8 @@ def convert_lat_lon_to_city_country(latitude, longitude):
 def find_user_location(user_latitude, user_longitude) -> str:
     logger_ws_utilities.info("bp_users/utils find_user_location --> Searching for location_id")
     # Query all locations from the database
-    locations = sess.query(Locations).all()
+    with session_scope() as session:
+        locations = session.query(Locations).all()
     user_latitude = float(user_latitude)
     user_longitude = float(user_longitude)
     for location in locations:
@@ -136,8 +137,9 @@ def add_user_loc_day_process(user_id,latitude, longitude, dateTimeUtc):
                         country=country, boundingbox=boundingbox_float_afied,
                         lat=lat, lon=lon,
                         tz_id=timezone_str)
-        sess.add(new_location)
-        sess.commit()
+        with session_scope() as session:
+            session.add(new_location)
+
         location_id = new_location.id
 
         # add past 30 days of weather history 
@@ -154,17 +156,17 @@ def add_user_loc_day_process(user_id,latitude, longitude, dateTimeUtc):
 
     # Convert datetime object to date object
     date_only_obj = date_time_obj.date()
-    
-    user_id_AND_date_utc_user_check_in_Exists = sess.query(UserLocationDay).filter_by(user_id=user_id, date_utc_user_check_in=date_only_obj).first()
+    with session_scope() as session:
+        user_id_AND_date_utc_user_check_in_Exists = session.query(UserLocationDay).filter_by(user_id=user_id, date_utc_user_check_in=date_only_obj).first()
     logger_ws_utilities.info(f"what is user_id_AND_date_utc_user_check_in_Exists: {user_id_AND_date_utc_user_check_in_Exists}")
     if user_id_AND_date_utc_user_check_in_Exists is None:        
         try:
-            sess.add(new_user_location_day)
-            sess.commit()
+            with session_scope() as session:
+                session.add(new_user_location_day)
         except Exception as e:
             logger_ws_utilities.info(f"Error caused by trying to add a new UserLocationDay row")
             logger_ws_utilities.info(f"{type(e).__name__}: {e}")
-            sess.rollback()
+
     else:
         logger_ws_utilities.info("User already has an entry for this day")
 
@@ -174,8 +176,8 @@ def add_user_loc_day_process(user_id,latitude, longitude, dateTimeUtc):
 
 def add_weather_history_30_days(location_id):
     logger_ws_utilities.info("- accessed: ws_utlitiles/api/users.py add_weather_history_30_days ")
-
-    location = sess.get(Locations, location_id)
+    with session_scope() as session:
+        location = session.get(Locations, location_id)
 
     api_token = config.VISUAL_CROSSING_TOKEN
     vc_base_url = config.VISUAL_CROSSING_BASE_URL
