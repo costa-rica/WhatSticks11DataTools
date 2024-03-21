@@ -73,46 +73,46 @@ def find_user_location(user_latitude, user_longitude) -> str:
     # Query all locations from the database
     with session_scope() as session:
         locations = session.query(Locations).all()
-    user_latitude = float(user_latitude)
-    user_longitude = float(user_longitude)
-    for location in locations:
-        print(f"Checking {location.city}")
-        # Assuming boundingbox format is [min_lat, max_lat, min_lon, max_lon]
-        boundingbox = location.boundingbox
-        min_lat, max_lat, min_lon, max_lon = boundingbox
-        
-        # add buffer
-        min_lat = min_lat - 0.15
-        max_lat = max_lat + 0.15
-        min_lon = min_lon - 0.25
-        max_lon = max_lon + 0.25
-        # NOTE: Buffer magnitude in kilometers:
-        # - 0.15 lat is approx 16.5km
-        # - 0.25 lon is approx 20km
-        
-        
-        if location.city == "San Francisco":
-            print("---------------------")
-            if min_lat <= user_latitude <= max_lat:
-                print("*** found latitude! *")
-            else:
-                print(f"min_lat: {min_lat}")
-                print(f"user_latitude: {user_latitude}")
-                print(f"max_lat: {max_lat}")
-            if min_lon <= user_longitude <= max_lon:
-                print("*** found user_longitude! *")
-            else:
-                print(f"min_lon: {min_lon}")
-                print(f"user_longitude: {user_longitude}")
-                print(f"max_lon: {max_lon}")
+        user_latitude = float(user_latitude)
+        user_longitude = float(user_longitude)
+        for location in locations:
+            print(f"Checking {location.city}")
+            # Assuming boundingbox format is [min_lat, max_lat, min_lon, max_lon]
+            boundingbox = location.boundingbox
+            min_lat, max_lat, min_lon, max_lon = boundingbox
+            
+            # add buffer
+            min_lat = min_lat - 0.15
+            max_lat = max_lat + 0.15
+            min_lon = min_lon - 0.25
+            max_lon = max_lon + 0.25
+            # NOTE: Buffer magnitude in kilometers:
+            # - 0.15 lat is approx 16.5km
+            # - 0.25 lon is approx 20km
+            
+            
+            # if location.city == "San Francisco":
+            #     print("---------------------")
+            #     if min_lat <= user_latitude <= max_lat:
+            #         print("*** found latitude! *")
+            #     else:
+            #         print(f"min_lat: {min_lat}")
+            #         print(f"user_latitude: {user_latitude}")
+            #         print(f"max_lat: {max_lat}")
+            #     if min_lon <= user_longitude <= max_lon:
+            #         print("*** found user_longitude! *")
+            #     else:
+            #         print(f"min_lon: {min_lon}")
+            #         print(f"user_longitude: {user_longitude}")
+            #         print(f"max_lon: {max_lon}")
 
-            print("---------------------")
+            #     print("---------------------")
 
-        # Check if user's coordinates are within the bounding box
-        if min_lat <= user_latitude <= max_lat and min_lon <= user_longitude <= max_lon:
-            logger_ws_utilities.info(f"- Found coords in location: {location.city}")
-            # return str(location.id)  # Return the location ID if within the bounding box
-            return location.id  # Return the location ID if within the bounding box
+            # Check if user's coordinates are within the bounding box
+            if min_lat <= user_latitude <= max_lat and min_lon <= user_longitude <= max_lon:
+                logger_ws_utilities.info(f"- Found coords in location: {location.city}")
+                # return str(location.id)  # Return the location ID if within the bounding box
+                return location.id  # Return the location ID if within the bounding box
     logger_ws_utilities.info(f"- Did NOT fined coords in location")
     return "no_location_found"  # Return this if no location matches the user's coordinates
 
