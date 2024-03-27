@@ -79,7 +79,7 @@ def create_df_crosswalk(table_name_for_crosswalk, zip_filename):
     if len(df_from_dict) > 0:
         # Step 8: add indicator for new user/location
         df_from_dict['new_row']='yes'
-        df_from_dict.rename(columns={'id': 'new_id'}, inplace=True)
+        # df_from_dict.rename(columns={'id': 'new_id'}, inplace=True)
 
         logger_ws_utilities.info(f"df_from_dict length: {len(df_from_dict)} ")
         logger_ws_utilities.info(f"df_from_dict columns: {list(df_from_dict.columns)} ")
@@ -87,8 +87,8 @@ def create_df_crosswalk(table_name_for_crosswalk, zip_filename):
         logger_ws_utilities.info(f"df_crosswalk columns: {list(df_crosswalk.columns)} ")
 
         if table_name_for_crosswalk == "locations":
-            df_crosswalk_with_new_row_indicator = pd.merge(df_crosswalk,df_from_dict[['new_id','new_row']],
-                                                            on=['new_id'],how='left', suffixes=('', '_new'))
+            df_crosswalk_with_new_row_indicator = pd.merge(df_crosswalk,df_from_dict[['lat','lon','new_row']],
+                                                            on=['lat','lon'],how='left', suffixes=('', '_new'))
         elif table_name_for_crosswalk == "users":
             # df_from_dict will does not have id or new_id so merge on email
             df_crosswalk_with_new_row_indicator = pd.merge(df_crosswalk,df_from_dict[['email','new_row']],
