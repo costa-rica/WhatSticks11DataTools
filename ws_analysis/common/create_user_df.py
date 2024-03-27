@@ -149,7 +149,7 @@ def create_user_location_date_df(user_id):
     logger_ws_analysis.info("- in create_user_location_date_df")
     user_locations_day_query = sess.query(UserLocationDay).filter_by(user_id = user_id)
     user_locations_day_df = pd.read_sql(user_locations_day_query.statement, engine)
-    user_locations_day_df.rename(columns={'date_utc_user_check_in': 'date_time'},inplace=True)
+    user_locations_day_df.rename(columns={'date_utc_user_check_in': 'date'},inplace=True)
 
-    return user_locations_day_df[['date_time','location_id']]
+    return user_locations_day_df[['date','location_id']]
 

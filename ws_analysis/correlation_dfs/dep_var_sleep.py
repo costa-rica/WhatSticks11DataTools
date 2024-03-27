@@ -150,9 +150,14 @@ def corr_sleep_workout_dummies(df_qty_cat, df_workouts):
         return "insufficient data", "insufficient data"
 
 
-def corr_sleep_cloudiness(df_qty_cat, df_user_locations_day, df_weather_history):
+# def corr_sleep_cloudiness(df_qty_cat, df_user_locations_day, df_weather_history):
+def corr_sleep_cloudiness(df_qty_cat):
+    ## Paremeters:
+    ### df_qty_cat from create_user_qty_cat_df
+    ### df_user_locations_day
+    ### df_weather_history
     logger_ws_analysis.info("- in corr_sleep_cloudiness")
-    user_id = df['user_id'].iloc[0]
+    user_id = df_qty_cat['user_id'].iloc[0]
 
     df_sleep_time = create_df_daily_sleep(df_qty_cat)
     df_sleep_time.rename(columns=({'dateUserTz_3pm':'dateUserTz'}),inplace=True)

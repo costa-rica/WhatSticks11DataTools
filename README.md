@@ -59,6 +59,9 @@ For any queries or suggestions, please contact us at nrodrig1@gmail.com.
 
 ## Documentation
 
+create_df_daily_<DATA_ELEMENT> the date column is expected to be of datetime.date()
+
+
 ### ws_utilities/web/admin.py
 - The website upload .zip uses a sequence of functions found in ws_utilites/api/admin.py. Important to note, even if no new users are added, the creation of a crosswalk table (df_crosswalk_users) will still create a df (df_crosswalk_users) that provides a mapping from existing user_ids to the user_ids found in the .zip file. Then convert the ones user_ids from the .zip file and append to the database correctly.
 
@@ -76,9 +79,10 @@ interpolate_missing_dates_exclude_references
 create_df_daily_user_location_consecutive 
 - purpose: used to create a user's daily location_id so that weather correlations can be calculated.
 - parameters: 
+  - user_id: integer
   - start_date: string in format `%Y-%m-%d`
   - end_date: string in format `%Y-%m-%d`
-  - df_daily_user_location: This is a dataframe of UserLocationDay table filtered on one user. Columns are only: date (datetime.date), location_id (integer). No duplicate date rows.
+- returns a dataframe with date and location_id
 
 
 

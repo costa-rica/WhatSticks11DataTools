@@ -19,6 +19,12 @@ def create_df_daily_sleep(df):
     # Apply the function to each row to create the new dateUserTz_3pm column
     df_sleep['dateUserTz_3pm'] = df_sleep.apply(get_dateUserTz_3pm, axis=1)
     df_sleep_states_3_4_5 = df_sleep[df_sleep['value'].isin(["3.0", "4.0", "5.0"])]
+
+    # Format of value column is different sometimes:
+    if len(df_sleep_states_3_4_5) == 0:
+        df_sleep_states_3_4_5 = df_sleep[df_sleep['value'].isin(["3", "4", "5"])]
+
+
     # Apply the function to each row in the dataframe
     df_sleep_states_3_4_5['sleepTimeUserTz'] = df_sleep_states_3_4_5.apply(lambda row: calculate_duration_in_hours(row['startDateUserTz'], row['endDateUserTz']), axis=1)
     # Now, let's aggregate by dateUserTz_3pm and sum the sleepTimeUserTz values

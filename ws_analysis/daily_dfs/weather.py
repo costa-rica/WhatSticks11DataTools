@@ -11,5 +11,6 @@ def create_df_weather_history():
     weather_hist_df['date_time'] = pd.to_datetime(weather_hist_df['date_time'])
     # Extract the date component and overwrite the 'date_time' column
     weather_hist_df['date_time'] = weather_hist_df['date_time'].dt.date
+    weather_hist_df.rename(columns={'date_time': 'date'},inplace=True)
 
     return weather_hist_df

@@ -1,18 +1,23 @@
 from ..common.config_and_logger import config, logger_ws_analysis
+from ..common.create_user_df import create_user_location_date_df
 import pandas as pd
 from ws_models import engine, sess, WeatherHistory
 from ws_models import sess, engine, Users, UserLocationDay, Locations
-import datetime
+from datetime import datetime, timedelta
 
 
-
-def create_df_daily_user_location_consecutive(start_date, end_date, df_daily_user_location):
+def create_df_daily_user_location_consecutive(user_id):
     logger_ws_analysis.info("- in create_df_daily_user_location_consecutive -")
-    search_row_date = start_date
+
+    df_user_location_date = create_user_location_date_df(user_id)
+
+    start_date_obj = df_user_location_date['date'].min()
+    search_row_date = start_date_obj
     df = pd.DataFrame()
-    while search_row_date <= end_date:
+    # while search_row_date <= end_date_obj:
+    while search_row_date <= datetime.now().date():
     
-        df_next_row = return_next_day(df_daily_user_location, search_row_date)
+        df_next_row = return_next_day(df_user_location_date, search_row_date)
         df_next_row.reset_index(inplace=True, drop=True)
 
         if df_next_row.date.loc[0] == search_row_date:
@@ -23,7 +28,8 @@ def create_df_daily_user_location_consecutive(start_date, end_date, df_daily_use
             df_next_row = pd.DataFrame({'date': [search_row_date], 'location_id': [location_id]})
             df = pd.concat([df, df_next_row], ignore_index=True)
 
-        search_row_date = search_row_date + datetime.timedelta(days=1)
+        search_row_date = search_row_date + timedelta(days=1)
+
     return df
 
 ################
@@ -33,6 +39,11 @@ def create_df_daily_user_location_consecutive(start_date, end_date, df_daily_use
 def return_next_day(df_daily_user_location, search_row_date):
     # Attempt to find a row that matches the search date exactly
     df = df_daily_user_location[df_daily_user_location['date'] == search_row_date]
+
+    # logger_ws_analysis.info(df_daily_user_location.dtypes)
+    # logger_ws_analysis.info(f"row 1: {df_daily_user_location.loc[0].date}")
+    # logger_ws_analysis.info(f"-----------------------------")
+
     if len(df) == 0:
         # Filter the DataFrame for rows with dates older than the search date
         older_dates_df = df_daily_user_location[df_daily_user_location['date'] < search_row_date]
