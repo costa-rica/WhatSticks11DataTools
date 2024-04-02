@@ -1,10 +1,11 @@
-from .config_and_logger import config, logger_ws_analysis
+from .config_and_logger import config, logger_ws_analysis, wrap_up_session
 from .utilities import convert_to_user_tz, get_dateUserTz_3pm, \
     calculate_duration_in_hours, create_pickle_apple_qty_cat_path_and_name, \
     create_pickle_apple_workouts_path_and_name, \
     adjust_timezone, add_timezones_from_UserLocationDay
 import pandas as pd
-from ws_models import engine, sess, Users, UserLocationDay, Locations
+# from ws_models import engine, sess, Users, UserLocationDay, Locations
+from ws_models import engine, DatabaseSession, Users, UserLocationDay, Locations
 from datetime import datetime
 import pytz
 import os
@@ -18,7 +19,10 @@ import os
 # def create_user_qty_cat_df(user_id, user_tz_str='Europe/Paris'):
 def create_user_qty_cat_df(user_id):
     # Query data from database into pandas dataframe
+
     logger_ws_analysis.info("- in create_user_qty_cat_df -")
+    db_session = DatabaseSession()
+
     pickle_apple_qty_cat_path_and_name = create_pickle_apple_qty_cat_path_and_name(user_id)
     if os.path.exists(pickle_apple_qty_cat_path_and_name):
         logger_ws_analysis.info(f"- reading pickle file for workouts: {pickle_apple_qty_cat_path_and_name} -")
@@ -28,8 +32,10 @@ def create_user_qty_cat_df(user_id):
         query = f"SELECT * FROM apple_health_quantity_category WHERE user_id = {user_id}"
         df = pd.read_sql_query(query, engine)
     logger_ws_analysis.info(f"user_id: {user_id}")
-    user_tz_str = sess.get(Users,user_id).timezone
-
+    # user_tz_str = sess.get(Users,user_id).timezone
+    user_tz_str = db_session.get(Users,user_id).timezone
+    wrap_up_session(db_session)
+    
     if user_tz_str == None or user_tz_str == "":
         logger_ws_analysis.info(f"- Error: ws_analysis/common/create_user_df.py/create_user_qty_cat_df --> user_tz_str is None or blank -")
     else:

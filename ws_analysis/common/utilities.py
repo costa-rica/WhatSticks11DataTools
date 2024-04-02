@@ -4,7 +4,7 @@ from ws_models import engine
 from datetime import datetime
 import pytz
 import os
-from ws_models import engine, sess, Users, UserLocationDay, Locations
+from ws_models import engine, DatabaseSession, Users, UserLocationDay, Locations
 
 
 # Function to convert date from UTC to Paris time
@@ -75,11 +75,13 @@ def add_timezones_from_UserLocationDay(user_id, df):
     # - query_user_loc_day_for_user_id.date_utc_user_check_in_str
     ##############################################################################################################
 
+    db_session = DatabaseSession()
+
     # get timezones from UserLocationDay (backref tz_id) and update user_tz_str --- 
     # NOTE: UserLocationDay does not contain timezone it has relation to Locations table which does have timezone
-    query_user_loc_day_for_user_id = sess.query(UserLocationDay, Locations.tz_id).join(Locations).\
+    query_user_loc_day_for_user_id = db_session.query(UserLocationDay, Locations.tz_id).join(Locations).\
         filter(UserLocationDay.user_id == user_id)
-
+    wrap_up_session(db_session)
     df_user_loc_day = pd.read_sql(query_user_loc_day_for_user_id.statement, engine)
 
     # Convert date_utc_user_check_in from datetime.date to string to match df['date_utc'] format

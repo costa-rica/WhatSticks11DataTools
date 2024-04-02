@@ -4,8 +4,8 @@ from datetime import datetime, timedelta
 import os
 import pandas as pd
 import time
-from ws_models import sess, engine, Users, WeatherHistory, Locations, UserLocationDay
-from ..common.config_and_logger import config, logger_ws_utilities
+from ws_models import engine, DatabaseSession, Users, WeatherHistory, Locations, UserLocationDay
+from ..common.config_and_logger import config, logger_ws_utilities, wrap_up_session
 from timezonefinder import TimezoneFinder
 from ..scheduler.main import add_weather_history
 
@@ -70,8 +70,11 @@ def convert_lat_lon_to_city_country(latitude, longitude):
 
 def find_user_location(user_latitude, user_longitude) -> str:
     logger_ws_utilities.info("bp_users/utils find_user_location --> Searching for location_id")
+    db_session = DatabaseSession()
+
     # Query all locations from the database
-    locations = sess.query(Locations).all()
+    locations = db_session.query(Locations).all()
+    wrap_up_session(db_session)
     user_latitude = float(user_latitude)
     user_longitude = float(user_longitude)
     for location in locations:
@@ -117,6 +120,8 @@ def find_user_location(user_latitude, user_longitude) -> str:
 
 def add_user_loc_day_process(user_id,latitude, longitude, dateTimeUtc):
     logger_ws_utilities.info(f"- accessed:  ws_utilities -- add_user_loc_day_process - ")
+    db_session = DatabaseSession()
+
     location_id = find_user_location(latitude, longitude)
 
     if location_id == "no_location_found":
@@ -136,8 +141,9 @@ def add_user_loc_day_process(user_id,latitude, longitude, dateTimeUtc):
                         country=country, boundingbox=boundingbox_float_afied,
                         lat=lat, lon=lon,
                         tz_id=timezone_str)
-        sess.add(new_location)
-        sess.commit()
+        
+        db_session.add(new_location)
+        
         location_id = new_location.id
 
         # add past 30 days of weather history 
@@ -158,24 +164,19 @@ def add_user_loc_day_process(user_id,latitude, longitude, dateTimeUtc):
     user_id_AND_date_utc_user_check_in_Exists = sess.query(UserLocationDay).filter_by(user_id=user_id, date_utc_user_check_in=date_only_obj).first()
     logger_ws_utilities.info(f"what is user_id_AND_date_utc_user_check_in_Exists: {user_id_AND_date_utc_user_check_in_Exists}")
     if user_id_AND_date_utc_user_check_in_Exists is None:        
-        try:
-            sess.add(new_user_location_day)
-            sess.commit()
-        except Exception as e:
-            logger_ws_utilities.info(f"Error caused by trying to add a new UserLocationDay row")
-            logger_ws_utilities.info(f"{type(e).__name__}: {e}")
-            sess.rollback()
+        db_session.add(new_user_location_day)
     else:
         logger_ws_utilities.info("User already has an entry for this day")
-
+    
+    wrap_up_session(db_session)
     return location_id
 
 
 
 def add_weather_history_30_days(location_id):
     logger_ws_utilities.info("- accessed: ws_utlitiles/api/users.py add_weather_history_30_days ")
-
-    location = sess.get(Locations, location_id)
+    db_session = DatabaseSession()
+    location = db_session.get(Locations, location_id)
 
     api_token = config.VISUAL_CROSSING_TOKEN
     vc_base_url = config.VISUAL_CROSSING_BASE_URL
@@ -202,4 +203,5 @@ def add_weather_history_30_days(location_id):
     add_weather_history(location.id, response_30dayHist.json())
 
     logger_ws_utilities.info(f"- successfully added 30 days for location: {location.id} - {location.city} ")
+    wrap_up_session(db_session)
 

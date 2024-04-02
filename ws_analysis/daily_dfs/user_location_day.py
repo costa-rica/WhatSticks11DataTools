@@ -1,8 +1,7 @@
 from ..common.config_and_logger import config, logger_ws_analysis
 from ..common.create_user_df import create_user_location_date_df
 import pandas as pd
-from ws_models import engine, sess, WeatherHistory
-from ws_models import sess, engine, Users, UserLocationDay, Locations
+# from ws_models import Users, UserLocationDay, Locations
 from datetime import datetime, timedelta
 
 

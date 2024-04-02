@@ -4,7 +4,6 @@ from ..common.config_and_logger import config, logger_ws_analysis
 from ..common.utilities import get_dateUserTz_3pm, \
     calculate_duration_in_hours
 import pandas as pd
-from ws_models import sess, inspect, engine, OuraSleepDescriptions, AppleHealthQuantityCategory
 from datetime import datetime, timedelta
 import pytz
 
