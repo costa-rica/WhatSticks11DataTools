@@ -60,8 +60,8 @@ def create_user_qty_cat_df(user_id):
         df['endDateUserTz'] = df.apply(lambda row: adjust_timezone(row['endDate'], row['user_tz_str']), axis=1)
 
 
-        # df.to_csv(os.path.join(config.DB_ROOT, "create_user_df_Tz_step1.csv"))
-        # df.to_pickle(os.path.join(config.DB_ROOT, "create_user_df_Tz_step1.pkl"))
+        # df.to_csv(os.path.join(config.PROJECT_RESOURCES, "create_user_df_Tz_step1.csv"))
+        # df.to_pickle(os.path.join(config.PROJECT_RESOURCES, "create_user_df_Tz_step1.pkl"))
 
 
         # Create a temporary column for datetime conversion
@@ -80,9 +80,9 @@ def create_user_qty_cat_df(user_id):
         df.drop('startDateUserTz_temp', axis=1, inplace=True)
 
         list_of_user_data = list(df.sampleType.unique())
-        # df.to_csv(os.path.join(config.DB_ROOT, "create_user_df_adjusted.csv"))
-        # df.to_pickle(os.path.join(config.DB_ROOT, "create_user_df_adjusted.pkl"))
-        # logger_ws_analysis.info(f"- success: created: {os.path.join(config.DB_ROOT, 'create_user_df_adjusted.csv')} DELETE-")
+        # df.to_csv(os.path.join(config.PROJECT_RESOURCES, "create_user_df_adjusted.csv"))
+        # df.to_pickle(os.path.join(config.PROJECT_RESOURCES, "create_user_df_adjusted.pkl"))
+        # logger_ws_analysis.info(f"- success: created: {os.path.join(config.PROJECT_RESOURCES, 'create_user_df_adjusted.csv')} DELETE-")
         return df, list_of_user_data
 
     except Exception as e:
@@ -141,8 +141,8 @@ def create_user_workouts_df(user_id):
         df.drop('startDateUserTz_temp', axis=1, inplace=True)
 
         list_of_user_data = list(df.sampleType.unique())
-        # df.to_csv(os.path.join(config.DB_ROOT, "create_user_df_workouts_adjusted.csv"))
-        # logger_ws_analysis.info(f"- success: created: {os.path.join(config.DB_ROOT, 'create_user_df_workouts_adjusted.csv')} DELETE-")
+        # df.to_csv(os.path.join(config.PROJECT_RESOURCES, "create_user_df_workouts_adjusted.csv"))
+        # logger_ws_analysis.info(f"- success: created: {os.path.join(config.PROJECT_RESOURCES, 'create_user_df_workouts_adjusted.csv')} DELETE-")
         return df, list_of_user_data
 
     except Exception as e:
