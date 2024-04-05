@@ -343,7 +343,7 @@ def remove_matching_rows(df_from_dict, df_from_db, match_columns):
     return df_from_dict
 
 def create_df_from_db_table(sqlalchemy_table_object):
-    db_session = DatabaseSession()
+    db_session = DatabaseSession()# This new db_session is ok, becuase this session is isolated, to just get data into a dataframe (open an close is ok)
     df_db_query = db_session.query(sqlalchemy_table_object)
     df_from_db = pd.read_sql(df_db_query.statement, engine)
     wrap_up_session(db_session)
@@ -355,7 +355,7 @@ def get_class_from_tablename(tablename):
       return c
 
 def create_df_from_db_table_name(table_name):
-    db_session = DatabaseSession()
+    db_session = DatabaseSession()# This new db_session is ok, becuase this session is isolated, to just get data into a dataframe (open an close is ok)
     sqlalchemy_table_object = get_class_from_tablename(table_name)
     df_db_query = db_session.query(sqlalchemy_table_object)
     df_from_db = pd.read_sql(df_db_query.statement, engine)

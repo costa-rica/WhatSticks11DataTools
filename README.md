@@ -61,6 +61,8 @@ For any queries or suggestions, please contact us at nrodrig1@gmail.com.
 
 create_df_daily_<DATA_ELEMENT> the date column is expected to be of datetime.date()
 
+### Communicating with the What Sticks Database and using database sessions
+Most functions in WS11DataTools assume that if there is a connection with the database the database session should be passed in as an argument. The What Sticks convention is to have an object called `db_session` which will be created by the source application. The WS11DataTools function will then use the session but will not commit/rollback and close, that will be done by the source application that calls the function.
 
 ### ws_utilities/web/admin.py
 - The website upload .zip uses a sequence of functions found in ws_utilites/api/admin.py. Important to note, even if no new users are added, the creation of a crosswalk table (df_crosswalk_users) will still create a df (df_crosswalk_users) that provides a mapping from existing user_ids to the user_ids found in the .zip file. Then convert the ones user_ids from the .zip file and append to the database correctly.

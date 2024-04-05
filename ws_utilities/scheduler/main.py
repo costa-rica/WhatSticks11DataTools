@@ -49,9 +49,9 @@ def interpolate_missing_dates_exclude_references(df):
 
 
 
-def add_weather_history(location_id, weather_data):
+def add_weather_history(db_session, location_id, weather_data):
     logger_ws_utilities.info(f"-- accessed: add_weather_history")
-    db_session = DatabaseSession()
+    # db_session = DatabaseSession()
 
     for day in weather_data['days']:
         weather_history = WeatherHistory(
@@ -94,6 +94,6 @@ def add_weather_history(location_id, weather_data):
         db_session.add(weather_history)
     logger_ws_utilities.info(f"weather_history: {weather_history}")
     # Commit the session to save these objects to the database
-    wrap_up_session(db_session)
+    # wrap_up_session(db_session)
 
 

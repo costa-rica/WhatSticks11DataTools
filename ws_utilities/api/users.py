@@ -43,13 +43,14 @@ def convert_lat_lon_to_timezone_string(latitude, longitude):
         return "Etc/GMT"
 
 def convert_lat_lon_to_city_country(latitude, longitude):
+    logger_ws_utilities.info(f"- in convert_lat_lon_to_city_country")
     # url = f"https://nominatim.openstreetmap.org/reverse?lat={latitude}&lon={longitude}&format=json"
     # url = f"{current_app.config.get('NOMINATIM_API_URL')}/reverse?lat={latitude}&lon={longitude}&format=json"
     url = f"{config.NOMINATIM_API_URL}/reverse?lat={latitude}&lon={longitude}&format=json"
-
+    logger_ws_utilities.info(f"sending request to : {url}")
     # Send the request
     response = requests.get(url, headers={"User-Agent": "What Sticks"})
-
+    logger_ws_utilities.info(f"response.status_code: {response.status_code}")
     # Parse the JSON response
     data = response.json()
 
@@ -68,13 +69,13 @@ def convert_lat_lon_to_city_country(latitude, longitude):
 
     return location_dict
 
-def find_user_location(user_latitude, user_longitude) -> str:
+def find_user_location(db_session, user_latitude, user_longitude) -> str:
     logger_ws_utilities.info("bp_users/utils find_user_location --> Searching for location_id")
-    db_session = DatabaseSession()
+    # db_session = DatabaseSession()
 
     # Query all locations from the database
     locations = db_session.query(Locations).all()
-    wrap_up_session(db_session)
+    
     user_latitude = float(user_latitude)
     user_longitude = float(user_longitude)
     for location in locations:
@@ -116,18 +117,24 @@ def find_user_location(user_latitude, user_longitude) -> str:
             # return str(location.id)  # Return the location ID if within the bounding box
             return location.id  # Return the location ID if within the bounding box
     logger_ws_utilities.info(f"- Did NOT fined coords in location")
+    # wrap_up_session(db_session)
     return "no_location_found"  # Return this if no location matches the user's coordinates
 
-def add_user_loc_day_process(user_id,latitude, longitude, dateTimeUtc):
+def add_user_loc_day_process(db_session, user_id, latitude, longitude, dateTimeUtc):
     logger_ws_utilities.info(f"- accessed:  ws_utilities -- add_user_loc_day_process - ")
-    db_session = DatabaseSession()
+    # db_session = DatabaseSession()
+    logger_ws_utilities.info(f"- received db_session id: {id(db_session)} -")
 
-    location_id = find_user_location(latitude, longitude)
+    location_id = find_user_location(db_session, latitude, longitude)
 
     if location_id == "no_location_found":
         logger_ws_utilities.info(f"- location not found adding it to Locations Table- ")
         timezone_str = convert_lat_lon_to_timezone_string(latitude, longitude)
         location_dict = convert_lat_lon_to_city_country(latitude, longitude)
+
+        logger_ws_utilities.info(f"- location_dict: {location_dict} -")
+
+
         city = location_dict.get('city', 'Not found')
         country = location_dict.get('country', 'Not found')
         state = location_dict.get('state', 'Not found')
@@ -143,11 +150,12 @@ def add_user_loc_day_process(user_id,latitude, longitude, dateTimeUtc):
                         tz_id=timezone_str)
         
         db_session.add(new_location)
-        
+        # wrap_up_session(db_session)
+        db_session.flush()
         location_id = new_location.id
 
         # add past 30 days of weather history 
-        add_weather_history_30_days(location_id)
+        add_weather_history_30_days(db_session, location_id)
 
     else:
         logger_ws_utilities.info(f"- location_id found in Locations Table --- > {location_id} - ")
@@ -161,21 +169,25 @@ def add_user_loc_day_process(user_id,latitude, longitude, dateTimeUtc):
     # Convert datetime object to date object
     date_only_obj = date_time_obj.date()
     
-    user_id_AND_date_utc_user_check_in_Exists = sess.query(UserLocationDay).filter_by(user_id=user_id, date_utc_user_check_in=date_only_obj).first()
+    user_id_AND_date_utc_user_check_in_Exists = db_session.query(UserLocationDay).filter_by(user_id=user_id, date_utc_user_check_in=date_only_obj).first()
     logger_ws_utilities.info(f"what is user_id_AND_date_utc_user_check_in_Exists: {user_id_AND_date_utc_user_check_in_Exists}")
-    if user_id_AND_date_utc_user_check_in_Exists is None:        
+    if user_id_AND_date_utc_user_check_in_Exists is None:
+        # db_session = DatabaseSession()
         db_session.add(new_user_location_day)
+        # wrap_up_session(db_session)
     else:
         logger_ws_utilities.info("User already has an entry for this day")
     
-    wrap_up_session(db_session)
+    
     return location_id
 
 
-
-def add_weather_history_30_days(location_id):
+def add_weather_history_30_days(db_session, location_id):
     logger_ws_utilities.info("- accessed: ws_utlitiles/api/users.py add_weather_history_30_days ")
-    db_session = DatabaseSession()
+    # db_session = DatabaseSession()
+    logger_ws_utilities.info(f"- received db_session id: {id(db_session)} -")
+    logger_ws_utilities.info(f"- searching location_id: {location_id} -")
+
     location = db_session.get(Locations, location_id)
 
     api_token = config.VISUAL_CROSSING_TOKEN
@@ -200,8 +212,8 @@ def add_weather_history_30_days(location_id):
     response_30dayHist = requests.get(api_url, params=params)
 
     # for day in response_30dayHist.json().get('days'):
-    add_weather_history(location.id, response_30dayHist.json())
+    add_weather_history(db_session, location.id, response_30dayHist.json())
 
     logger_ws_utilities.info(f"- successfully added 30 days for location: {location.id} - {location.city} ")
-    wrap_up_session(db_session)
+    # wrap_up_session(db_session)
 

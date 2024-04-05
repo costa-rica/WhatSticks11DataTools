@@ -33,7 +33,10 @@ stream_handler.setFormatter(formatter_terminal)
 logger_ws_utilities.addHandler(file_handler)
 logger_ws_utilities.addHandler(stream_handler)
 
-
+################################################################################################
+# Probably should not use this. Instead, pass in db_session (from app that called ws_utilities)
+# that needs operation done and return db_session to source app to commit/rollback and close
+################################################################################################
 def wrap_up_session(db_session):
     logger_ws_utilities.info("- accessed wrap_up_session -")
     try:
