@@ -5,7 +5,8 @@ import os
 import pandas as pd
 import time
 from ws_models import engine, DatabaseSession, Users, WeatherHistory, Locations, UserLocationDay
-from ..common.config_and_logger import config, logger_ws_utilities, wrap_up_session
+from ..common.config_and_logger import config, logger_ws_utilities
+from ..common.utilities import wrap_up_session
 from timezonefinder import TimezoneFinder
 from ..scheduler.main import add_weather_history
 

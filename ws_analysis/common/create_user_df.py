@@ -1,11 +1,12 @@
-from .config_and_logger import config, logger_ws_analysis, wrap_up_session
-from .utilities import convert_to_user_tz, get_dateUserTz_3pm, \
+from .config_and_logger import config, logger_ws_analysis
+from .utilities import wrap_up_session, convert_to_user_tz, get_dateUserTz_3pm, \
     calculate_duration_in_hours, create_pickle_apple_qty_cat_path_and_name, \
     create_pickle_apple_workouts_path_and_name, \
     adjust_timezone, add_timezones_from_UserLocationDay
 import pandas as pd
 # from ws_models import engine, sess, Users, UserLocationDay, Locations
-from ws_models import engine, DatabaseSession, Users, UserLocationDay, Locations
+from ws_models import engine, DatabaseSession, Users, UserLocationDay, Locations, \
+    AppleHealthQuantityCategory, AppleHealthWorkout
 from datetime import datetime
 import pytz
 import os
@@ -29,8 +30,9 @@ def create_user_qty_cat_df(user_id):
         # df_existing_user_workouts_data=pd.read_pickle(pickle_apple_qty_cat_path_and_name)
         df=pd.read_pickle(pickle_apple_qty_cat_path_and_name)
     else:
-        query = f"SELECT * FROM apple_health_quantity_category WHERE user_id = {user_id}"
-        df = pd.read_sql_query(query, engine)
+        # query = f"SELECT * FROM apple_health_quantity_category WHERE user_id = {user_id}"
+        db_query = db_session.query(AppleHealthQuantityCategory).filter_by(user_id=user_id)
+        df = pd.read_sql_query(db_query, engine)
     logger_ws_analysis.info(f"user_id: {user_id}")
     # user_tz_str = sess.get(Users,user_id).timezone
     user_tz_str = db_session.get(Users,user_id).timezone
@@ -94,6 +96,7 @@ def create_user_qty_cat_df(user_id):
 
 def create_user_workouts_df(user_id):
     logger_ws_analysis.info("- in create_user_workouts_df -")
+    db_session = DatabaseSession()
     # Query data from database into pandas dataframe
     # user_id=user_id
     pickle_apple_workouts_path_and_name = create_pickle_apple_workouts_path_and_name(user_id)
@@ -102,10 +105,11 @@ def create_user_workouts_df(user_id):
         # df_existing_user_workouts_data=pd.read_pickle(pickle_apple_workouts_path_and_name)
         df=pd.read_pickle(pickle_apple_workouts_path_and_name)
     else:
-        query = f"SELECT * FROM apple_health_workout WHERE user_id = {user_id}"
-        df = pd.read_sql_query(query, engine)
+        # query = f"SELECT * FROM apple_health_workout WHERE user_id = {user_id}"
+        db_query = db_session.query(AppleHealthWorkout).filter_by(user_id=user_id)
+        df = pd.read_sql_query(db_query, engine)
     
-    user_tz_str = sess.get(Users,user_id).timezone
+    user_tz_str = db_session.get(Users,user_id).timezone
     if user_tz_str == None or user_tz_str == "":
         logger_ws_analysis.info(f"- Error: ws_analysis/common/create_user_df.py/create_user_qty_cat_df --> user_tz_str is None or blank -")
     
@@ -143,19 +147,22 @@ def create_user_workouts_df(user_id):
         list_of_user_data = list(df.sampleType.unique())
         # df.to_csv(os.path.join(config.PROJECT_RESOURCES, "create_user_df_workouts_adjusted.csv"))
         # logger_ws_analysis.info(f"- success: created: {os.path.join(config.PROJECT_RESOURCES, 'create_user_df_workouts_adjusted.csv')} DELETE-")
+        wrap_up_session(db_session)
         return df, list_of_user_data
 
     except Exception as e:
         logger_ws_analysis.info("* User probably has NO Apple Quantity or Category Data *")
         logger_ws_analysis.info(f"An error occurred (in send_data_source_objects): {e}")
+        wrap_up_session(db_session)
         return "insufficient data", "insufficient data"
     
 
 def create_user_location_date_df(user_id):
     logger_ws_analysis.info("- in create_user_location_date_df")
+    db_session = DatabaseSession()
     user_locations_day_query = sess.query(UserLocationDay).filter_by(user_id = user_id)
     user_locations_day_df = pd.read_sql(user_locations_day_query.statement, engine)
     user_locations_day_df.rename(columns={'date_utc_user_check_in': 'date'},inplace=True)
-
+    wrap_up_session(db_session)
     return user_locations_day_df[['date','location_id']]
 

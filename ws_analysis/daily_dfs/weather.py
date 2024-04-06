@@ -1,4 +1,5 @@
 from ..common.config_and_logger import config, logger_ws_analysis
+from ..common.utilities import wrap_up_session
 import pandas as pd
 from ws_models import engine, DatabaseSession, WeatherHistory
 

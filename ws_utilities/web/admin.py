@@ -5,6 +5,7 @@ import shutil
 from ws_models import Base, engine, DatabaseSession, Users, AppleHealthWorkout, AppleHealthQuantityCategory,  UserLocationDay, \
     Locations, WeatherHistory
 from ..common.config_and_logger import config, logger_ws_utilities
+from ..common.utilities import wrap_up_session
 
 
 # def create_df_crosswalk(table_name, zip_filename):

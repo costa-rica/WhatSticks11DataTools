@@ -109,3 +109,18 @@ def add_timezones_from_UserLocationDay(user_id, df):
 
     return df
 
+def wrap_up_session(db_session):
+    logger_ws_analysis.info("- accessed wrap_up_session -")
+    try:
+        # perform some database operations
+        db_session.commit()
+        logger_ws_analysis.info("- perfomed: db_session.commit() -")
+    except Exception as e:
+        logger_ws_analysis.info(f"{type(e).__name__}: {e}")
+        db_session.rollback()  # Roll back the transaction on error
+        logger_ws_analysis.info("- perfomed: db_session.rollback() -")
+        raise
+    finally:
+        db_session.close()  # Ensure the session is closed in any case
+        logger_ws_analysis.info("- perfomed: db_session.close() -")
+
