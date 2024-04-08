@@ -15,8 +15,9 @@ match os.environ.get('WS_CONFIG_TYPE'):
         print('- WhatSticks11DataTools(ws_analysis)/config: Local')
 
 #Setting up Logger
+app_name = "WS11DataTools - ws_analysis"
 formatter = logging.Formatter('%(asctime)s:%(name)s:%(message)s')
-formatter_terminal = logging.Formatter('%(asctime)s:%(filename)s:%(name)s:%(message)s')
+formatter_terminal = logging.Formatter(f'%(asctime)s - {app_name} - %(name)s - [%(filename)s:%(lineno)d] - %(message)s')
 
 #initialize a logger
 logger_ws_analysis = logging.getLogger(__name__)
