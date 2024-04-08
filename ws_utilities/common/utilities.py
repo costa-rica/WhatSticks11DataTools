@@ -1,4 +1,4 @@
-from .config_and_logger import config, logger_ws_analysis
+from .config_and_logger import config, logger_ws_utilities
 
 ################################################################################################
 # Probably should not use this. Instead, pass in db_session (from app that called ws_utilities)
