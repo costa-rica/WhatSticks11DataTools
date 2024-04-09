@@ -81,16 +81,15 @@ def create_user_qty_cat_df(user_id):
         # Drop the temporary column
         df.drop('startDateUserTz_temp', axis=1, inplace=True)
 
-        list_of_user_data = list(df.sampleType.unique())
-        # df.to_csv(os.path.join(config.PROJECT_RESOURCES, "create_user_df_adjusted.csv"))
-        # df.to_pickle(os.path.join(config.PROJECT_RESOURCES, "create_user_df_adjusted.pkl"))
-        # logger_ws_analysis.info(f"- success: created: {os.path.join(config.PROJECT_RESOURCES, 'create_user_df_adjusted.csv')} DELETE-")
-        return df, list_of_user_data
+        # list_of_user_data = list(df.sampleType.unique())
+
+        # return df, list_of_user_data
+        return df
 
     except Exception as e:
         logger_ws_analysis.info("* User probably has NO Apple Quantity or Category Data *")
         logger_ws_analysis.info(f"An error occurred (in send_data_source_objects): {e}")
-        return "insufficient data", "insufficient data"
+        return pd.DataFrame()
     
 
 
@@ -144,23 +143,25 @@ def create_user_workouts_df(user_id):
         # Drop the temporary column
         df.drop('startDateUserTz_temp', axis=1, inplace=True)
 
-        list_of_user_data = list(df.sampleType.unique())
+        # list_of_user_data = list(df.sampleType.unique())
         # df.to_csv(os.path.join(config.PROJECT_RESOURCES, "create_user_df_workouts_adjusted.csv"))
         # logger_ws_analysis.info(f"- success: created: {os.path.join(config.PROJECT_RESOURCES, 'create_user_df_workouts_adjusted.csv')} DELETE-")
         wrap_up_session(db_session)
-        return df, list_of_user_data
+        # return df, list_of_user_data
+        return df
 
     except Exception as e:
         logger_ws_analysis.info("* User probably has NO Apple Quantity or Category Data *")
         logger_ws_analysis.info(f"An error occurred (in send_data_source_objects): {e}")
         wrap_up_session(db_session)
-        return "insufficient data", "insufficient data"
+        # return "insufficient data", "insufficient data"
+        return pd.DataFrame()
     
 
 def create_user_location_date_df(user_id):
     logger_ws_analysis.info("- in create_user_location_date_df")
     db_session = DatabaseSession()
-    user_locations_day_query = sess.query(UserLocationDay).filter_by(user_id = user_id)
+    user_locations_day_query = db_session.query(UserLocationDay).filter_by(user_id = user_id)
     user_locations_day_df = pd.read_sql(user_locations_day_query.statement, engine)
     user_locations_day_df.rename(columns={'date_utc_user_check_in': 'date'},inplace=True)
     wrap_up_session(db_session)

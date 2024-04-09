@@ -12,7 +12,7 @@ match os.environ.get('WS_CONFIG_TYPE'):
         print('- WhatSticks11DataTools(ws_utilites)/config: Production')
     case _:
         config = ConfigWorkstation()
-        print('- WhatSticks11DataTools(ws_utilites)/config: Local')
+        print('- WhatSticks11DataTools(ws_utilites)/config: Workstation')
 
 #Setting up Logger
 app_name = "WS11DataTools - ws_utilities"

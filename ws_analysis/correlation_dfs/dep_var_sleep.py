@@ -11,6 +11,7 @@ from ..daily_dfs.workouts import create_df_daily_workout_duration, \
     create_df_daily_workout_duration_dummies
 from ..common.create_user_df import create_user_location_date_df
 from ..daily_dfs.weather import create_df_weather_history
+from ..daily_dfs.user_location_day import create_df_daily_user_location_consecutive
 
 # df here would come from create_user_df create_user_qty_cat_df
 def corr_sleep_steps(df):
@@ -149,7 +150,6 @@ def corr_sleep_workout_dummies(df_qty_cat, df_workouts):
         logger_ws_analysis.info(f"error in corr_sleep_workouts: {e}")
         return "insufficient data", "insufficient data"
 
-
 # def corr_sleep_cloudiness(df_qty_cat, df_user_locations_day, df_weather_history):
 def corr_sleep_cloudiness(df_qty_cat):
     ## Paremeters:
@@ -161,21 +161,41 @@ def corr_sleep_cloudiness(df_qty_cat):
 
     df_sleep_time = create_df_daily_sleep(df_qty_cat)
     df_sleep_time.rename(columns=({'dateUserTz_3pm':'dateUserTz'}),inplace=True)
+    # df_sleep_time.rename(columns=({'dateUserTz_3pm':'date'}),inplace=True)
 
-    df_user_locations_day = create_user_location_date_df(user_id)
+    # df_user_locations_day = create_user_location_date_df(user_id)
+    df_user_locations_day = create_df_daily_user_location_consecutive(user_id)
     df_weather_history = create_df_weather_history()
 
-
     # Step 2: Perform a left join to merge while keeping all rows from user_locations_day_df
-    df_daily_cloudcover = pd.merge(df_user_locations_day, df_weather_history[['date_time', 'location_id', 'cloudcover']],
-                        on=['date_time', 'location_id'], how='left')
+    df_daily_cloudcover = pd.merge(df_user_locations_day, df_weather_history[['date', 'location_id', 'cloudcover']],
+                        on=['date', 'location_id'], how='left')
+    
 
-    df_daily_cloudcover.rename(columns=({'date_time':'dateUserTz'}),inplace=True)
+    df_daily_cloudcover.rename(columns=({'date':'dateUserTz'}),inplace=True)
 
 
     df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, df_daily_cloudcover[['dateUserTz','cloudcover']],
-                                          on=['dateUserTz'],how='left')
-                                          
-    correlation = df_daily_sleep_time_cloudcover['cloudcover'].corr(df_daily_sleep_time_cloudcover['sleepTimeUserTz'])
+                                        on=['dateUserTz'],how='left')
 
-    # TODO: Remove n/a's
+    # Remove nan's
+    df_daily_sleep_time_cloudcover.dropna(inplace=True)
+    df_daily_sleep_time_cloudcover.reset_index(inplace=True)
+    df_daily_sleep_time_cloudcover.drop(columns=['index'], inplace=True)
+    obs_count = len(df_daily_sleep_time_cloudcover)
+    
+    try:
+        if obs_count > 5:# arbitrary minimum
+
+            # save csv file for user
+            csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_sleep_time_cloudcover.csv")
+            df_daily_sleep_time_cloudcover.to_csv(csv_path_and_filename)
+
+            correlation = df_daily_sleep_time_cloudcover['cloudcover'].corr(df_daily_sleep_time_cloudcover['sleepTimeUserTz'])
+            return correlation, obs_count
+            # return "insufficient data", "insufficient data"
+        else:
+            return "insufficient data", "insufficient data"
+    except Exception as e:
+        logger_ws_analysis.info(f"error in corr_sleep_heart_rate: {e}")
+        return "insufficient data", "insufficient data"
