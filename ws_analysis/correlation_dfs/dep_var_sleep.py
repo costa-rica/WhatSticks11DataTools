@@ -152,10 +152,6 @@ def corr_sleep_workout_dummies(df_qty_cat, df_workouts):
 
 # def corr_sleep_cloudiness(df_qty_cat, df_user_locations_day, df_weather_history):
 def corr_sleep_cloudiness(df_qty_cat):
-    ## Paremeters:
-    ### df_qty_cat from create_user_qty_cat_df
-    ### df_user_locations_day
-    ### df_weather_history
     logger_ws_analysis.info("- in corr_sleep_cloudiness")
     user_id = df_qty_cat['user_id'].iloc[0]
 
@@ -171,14 +167,11 @@ def corr_sleep_cloudiness(df_qty_cat):
     df_daily_cloudcover = pd.merge(df_user_locations_day, df_weather_history[['date', 'location_id', 'cloudcover']],
                         on=['date', 'location_id'], how='left')
     
-
     df_daily_cloudcover.rename(columns=({'date':'dateUserTz'}),inplace=True)
-
 
     df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, df_daily_cloudcover[['dateUserTz','cloudcover']],
                                         on=['dateUserTz'],how='left')
 
-    # Remove nan's
     df_daily_sleep_time_cloudcover.dropna(inplace=True)
     df_daily_sleep_time_cloudcover.reset_index(inplace=True)
     df_daily_sleep_time_cloudcover.drop(columns=['index'], inplace=True)

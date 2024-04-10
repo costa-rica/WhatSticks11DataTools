@@ -50,7 +50,8 @@ def interpolate_missing_dates_exclude_references(df):
 
 
 def add_weather_history(db_session, location_id, weather_data):
-    logger_ws_utilities.info(f"-- accessed: add_weather_history")
+
+    logger_ws_utilities.info(f"-- in add_weather_history")
     # db_session = DatabaseSession()
 
     for day in weather_data['days']:
@@ -89,6 +90,7 @@ def add_weather_history(db_session, location_id, weather_data):
             conditions=day.get('conditions'),
             description=day.get('description'),
             icon=day.get('icon'),
+            unitgroup=config.VISUAL_CROSSING_UNIT_GROUP,
             time_stamp_utc=datetime.utcnow()
         )
         db_session.add(weather_history)

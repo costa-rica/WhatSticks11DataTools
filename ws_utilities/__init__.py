@@ -6,3 +6,5 @@ from .web.admin import create_df_crosswalk, update_and_append_via_df_crosswalk_u
     update_and_append_via_df_crosswalk_locations, update_and_append_user_location_day, \
     read_files_into_dict, remove_matching_rows, create_df_from_db_table, \
     get_class_from_tablename, create_df_from_db_table_name
+from .visual_crossing_api.vc_api_requests import request_visual_crossing_yesterday_weather, \
+    request_visual_crossing_30days_weather

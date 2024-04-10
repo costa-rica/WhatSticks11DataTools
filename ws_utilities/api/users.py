@@ -9,6 +9,7 @@ from ..common.config_and_logger import config, logger_ws_utilities
 from ..common.utilities import wrap_up_session
 from timezonefinder import TimezoneFinder
 from ..scheduler.main import add_weather_history
+from ..visual_crossing_api.vc_api_requests import request_visual_crossing_30days_weather
 
 def convert_string_to_datetime(date_string):
     # List of formats to try
@@ -121,7 +122,7 @@ def find_user_location(db_session, user_latitude, user_longitude) -> str:
     # wrap_up_session(db_session)
     return "no_location_found"  # Return this if no location matches the user's coordinates
 
-def add_user_loc_day_process(db_session, user_id, latitude, longitude, dateTimeUtc):
+def add_user_loc_day_process(db_session, user_id, latitude, longitude, formatted_datetime_utc):
     logger_ws_utilities.info(f"- accessed:  ws_utilities -- add_user_loc_day_process - ")
     # db_session = DatabaseSession()
     logger_ws_utilities.info(f"- received db_session id: {id(db_session)} -")
@@ -135,7 +136,6 @@ def add_user_loc_day_process(db_session, user_id, latitude, longitude, dateTimeU
 
         logger_ws_utilities.info(f"- location_dict: {location_dict} -")
 
-
         city = location_dict.get('city', 'Not found')
         country = location_dict.get('country', 'Not found')
         state = location_dict.get('state', 'Not found')
@@ -145,30 +145,34 @@ def add_user_loc_day_process(db_session, user_id, latitude, longitude, dateTimeU
         lat = location_dict.get('lat', latitude)
         lon = location_dict.get('lon', longitude)
 
-        new_location = Locations(city=city, state=state,
+        new_location_db_obj = Locations(city=city, state=state,
                         country=country, boundingbox=boundingbox_float_afied,
                         lat=lat, lon=lon,
                         tz_id=timezone_str)
         
-        db_session.add(new_location)
+        db_session.add(new_location_db_obj)
         # wrap_up_session(db_session)
         db_session.flush()
-        location_id = new_location.id
+        location_id = new_location_db_obj.id
 
-        # add past 30 days of weather history 
-        add_weather_history_30_days(db_session, location_id)
+        response_30day_hist = request_visual_crossing_30days_weather(new_location_db_obj)
+        # for day in response_30dayHist.json().get('days'):
+        # add_weather_history(db_session, location.id, response_30day_hist)
+        add_weather_history(db_session, new_location_db_obj.id, response_30day_hist)
+
+        logger_ws_utilities.info(f"- successfully added 30 days for new_location_db_obj: {new_location_db_obj.id} - {new_location_db_obj.city} ")
 
     else:
         logger_ws_utilities.info(f"- location_id found in Locations Table --- > {location_id} - ")
     
-    date_time_obj = convert_string_to_datetime(dateTimeUtc)
-    new_user_location_day = UserLocationDay(user_id=user_id,location_id=location_id,date_time_utc_user_check_in=date_time_obj,
-                                            date_utc_user_check_in=date_time_obj)
+    datetime_utc_obj = convert_string_to_datetime(formatted_datetime_utc)
+    new_user_location_day = UserLocationDay(user_id=user_id,location_id=location_id,date_time_utc_user_check_in=datetime_utc_obj,
+                                            date_utc_user_check_in=datetime_utc_obj)
 
     logger_ws_utilities.info(f"- STEP HERE: new_user_location_day: {new_user_location_day} - ")
 
     # Convert datetime object to date object
-    date_only_obj = date_time_obj.date()
+    date_only_obj = datetime_utc_obj.date()
     
     user_id_AND_date_utc_user_check_in_Exists = db_session.query(UserLocationDay).filter_by(user_id=user_id, date_utc_user_check_in=date_only_obj).first()
     logger_ws_utilities.info(f"what is user_id_AND_date_utc_user_check_in_Exists: {user_id_AND_date_utc_user_check_in_Exists}")
@@ -183,38 +187,38 @@ def add_user_loc_day_process(db_session, user_id, latitude, longitude, dateTimeU
     return location_id
 
 
-def add_weather_history_30_days(db_session, location_id):
-    logger_ws_utilities.info("- accessed: ws_utlitiles/api/users.py add_weather_history_30_days ")
-    # db_session = DatabaseSession()
-    logger_ws_utilities.info(f"- received db_session id: {id(db_session)} -")
-    logger_ws_utilities.info(f"- searching location_id: {location_id} -")
+# def add_weather_history_30_days(db_session, location_id):
+#     # logger_ws_utilities.info("- accessed: ws_utlitiles/api/users.py add_weather_history_30_days ")
+#     # # db_session = DatabaseSession()
+#     # logger_ws_utilities.info(f"- received db_session id: {id(db_session)} -")
+#     # logger_ws_utilities.info(f"- searching location_id: {location_id} -")
 
-    location = db_session.get(Locations, location_id)
+#     # location = db_session.get(Locations, location_id)
 
-    api_token = config.VISUAL_CROSSING_TOKEN
-    vc_base_url = config.VISUAL_CROSSING_BASE_URL
+#     # api_token = config.VISUAL_CROSSING_TOKEN
+#     # vc_base_url = config.VISUAL_CROSSING_BASE_URL
 
-    # Calculate the date range for the last 30 days
-    end_date = datetime.now()
-    start_date = end_date - timedelta(days=30)
+#     # # Calculate the date range for the last 30 days
+#     # end_date = datetime.now()
+#     # start_date = end_date - timedelta(days=30)
 
-    # Format dates in YYYY-MM-DD format
-    start_date_str = start_date.strftime('%Y-%m-%d')
-    end_date_str = end_date.strftime('%Y-%m-%d')
+#     # # Format dates in YYYY-MM-DD format
+#     # start_date_str = start_date.strftime('%Y-%m-%d')
+#     # end_date_str = end_date.strftime('%Y-%m-%d')
 
-    api_url = f"{vc_base_url}/{location.lat},{location.lon}/{start_date_str}/{end_date_str}"
-    params = {
-        'unitGroup': 'us',  # or 'metric' based on your preference
-        'key': api_token,
-        'include': 'days'  # Adjust based on the details you need
-    }
+#     # api_url = f"{vc_base_url}/{location.lat},{location.lon}/{start_date_str}/{end_date_str}"
+#     # params = {
+#     #     'unitGroup': 'us',  # or 'metric' based on your preference
+#     #     'key': api_token,
+#     #     'include': 'days'  # Adjust based on the details you need
+#     # }
 
-    # Make the API request
-    response_30dayHist = requests.get(api_url, params=params)
+#     # # Make the API request
+#     # response_30dayHist = requests.get(api_url, params=params)
 
-    # for day in response_30dayHist.json().get('days'):
-    add_weather_history(db_session, location.id, response_30dayHist.json())
+#     # for day in response_30dayHist.json().get('days'):
+#     add_weather_history(db_session, location.id, response_30dayHist.json())
 
-    logger_ws_utilities.info(f"- successfully added 30 days for location: {location.id} - {location.city} ")
-    # wrap_up_session(db_session)
+#     logger_ws_utilities.info(f"- successfully added 30 days for location: {location.id} - {location.city} ")
+#     # wrap_up_session(db_session)
 
