@@ -7,6 +7,7 @@ import time
 from ws_models import DatabaseSession, Users, WeatherHistory, Locations, UserLocationDay
 from ..common.config_and_logger import config, logger_ws_utilities
 from ..common.utilities import wrap_up_session
+from ..visual_crossing_api.vc_api_requests import request_visual_crossing_for_one_day
 
 
 def collect_yesterday_weather_history_from_visual_crossing():
