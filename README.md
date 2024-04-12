@@ -49,20 +49,37 @@ All features are specific to What Sticks Platform Applicaitons and leverage the 
 ## Note on ws_utilities
 The subdirectories within ws_utilities will be labeled by the application within the platform that first required the process. It will start with a main.py. The intention is that these processes will be reused and to not duplicate difficult or complicated tasks. As we develop better ways or run into problems we want to fix them in one place.
 
-
-## Contributing
-
-We welcome contributions to the What Sticks project.
-
-For any queries or suggestions, please contact us at nrodrig1@gmail.com.
-
-
-## Documentation
-
-create_df_daily_<DATA_ELEMENT> the date column is expected to be of datetime.date()
+## Documentation (General)
 
 ### Communicating with the What Sticks Database and using database sessions
 Most functions in WS11DataTools assume that if there is a connection with the database the database session should be passed in as an argument. The What Sticks convention is to have an object called `db_session` which will be created by the source application. The WS11DataTools function will then use the session but will not commit/rollback and close, that will be done by the source application that calls the function.
+
+
+## Documentation (ws_analysis)
+create_df_daily_<DATA_ELEMENT> the date column is expected to be of datetime.date()
+### common
+#### create_user_df.py
+create_df_daily_user_location_consecutive 
+- purpose: used to create a user's daily location_id so that weather correlations can be calculated.
+- parameters: 
+  - user_id: integer
+  - start_date: string in format `%Y-%m-%d`
+  - end_date: string in format `%Y-%m-%d`
+- returns a dataframe with date and location_id
+
+## Documentation (ws_utilities)
+### visual_crossing_api
+#### request_visual_crossing_for_one_day
+- required paramters
+  - location_db_obj: database object from Locations
+  - date_1_start: date string in format `%Y-%m-%d`
+- returns dictionary of weather objects from Visual Crossing for date_1_start
+
+#### request_visual_crossing_for_last_30days
+- required paramters
+  - location_db_obj: database object from Locations
+- returns list of dictionary of weather objects from Visual Crossing from current day going back 30 days.
+
 
 ### ws_utilities/web/admin.py
 - The website upload .zip uses a sequence of functions found in ws_utilites/api/admin.py. Important to note, even if no new users are added, the creation of a crosswalk table (df_crosswalk_users) will still create a df (df_crosswalk_users) that provides a mapping from existing user_ids to the user_ids found in the .zip file. Then convert the ones user_ids from the .zip file and append to the database correctly.
@@ -77,15 +94,8 @@ interpolate_missing_dates_exclude_references
 - This is used by WS11Scheduler. consider removing this process as it's unnecessary.
 
 
-### ws_analysis/create_user_df.py
-create_df_daily_user_location_consecutive 
-- purpose: used to create a user's daily location_id so that weather correlations can be calculated.
-- parameters: 
-  - user_id: integer
-  - start_date: string in format `%Y-%m-%d`
-  - end_date: string in format `%Y-%m-%d`
-- returns a dataframe with date and location_id
+## Contributing
 
+We welcome contributions to the What Sticks project.
 
-
-
+For any queries or suggestions, please contact us at nrodrig1@gmail.com.

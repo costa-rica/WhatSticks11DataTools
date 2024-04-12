@@ -4,7 +4,8 @@ import json
 import requests
 from datetime import datetime, timedelta
 
-def request_visual_crossing_yesterday_weather(location_db_obj, date_1_start):
+# def request_visual_crossing_yesterday_weather(location_db_obj, date_1_start):
+def request_visual_crossing_for_one_day(location_db_obj, date_1_start):
     logger_ws_utilities.info(f"-- in call_visual_crossing_yesterday_weather")
     logger_ws_utilities.info(f"- searching location_id: {location_db_obj.id}, city: {location_db_obj.city}, date: {date_1_start} -")
 
@@ -19,14 +20,15 @@ def request_visual_crossing_yesterday_weather(location_db_obj, date_1_start):
 
     if request_vc_weather_history.status_code == 200:
         # weather_data = request_vc_weather_history.json()
-        logger_ws_utilities.info(f"- Successfully added Weather History for: location.id: {location_db_obj.id} for date: {date_1_start} -")
+        logger_ws_utilities.info(f"- Successfully requested Weather History for: location.id: {location_db_obj.id} for date: {date_1_start} -")
         return request_vc_weather_history.json()
     else:
         return {}
     
 
-def request_visual_crossing_30days_weather(location_db_obj):
-    logger_ws_utilities.info(f"-- in request_visual_crossing_30days_weather")
+# def request_visual_crossing_30days_weather(location_db_obj):
+def request_visual_crossing_for_last_30days(location_db_obj):
+    logger_ws_utilities.info(f"-- in request_visual_crossing_for_last_30days")
 
     logger_ws_utilities.info(f"- searching location_id: {location_db_obj.id}, city: {location_db_obj.city} -")
 

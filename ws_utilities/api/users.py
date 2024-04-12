@@ -9,7 +9,7 @@ from ..common.config_and_logger import config, logger_ws_utilities
 from ..common.utilities import wrap_up_session
 from timezonefinder import TimezoneFinder
 from ..scheduler.main import add_weather_history
-from ..visual_crossing_api.vc_api_requests import request_visual_crossing_30days_weather
+from ..visual_crossing_api.vc_api_requests import request_visual_crossing_for_last_30days
 
 def convert_string_to_datetime(date_string):
     # List of formats to try
@@ -155,7 +155,7 @@ def add_user_loc_day_process(db_session, user_id, latitude, longitude, formatted
         db_session.flush()
         location_id = new_location_db_obj.id
 
-        response_30day_hist = request_visual_crossing_30days_weather(new_location_db_obj)
+        response_30day_hist = request_visual_crossing_for_last_30days(new_location_db_obj)
         # for day in response_30dayHist.json().get('days'):
         # add_weather_history(db_session, location.id, response_30day_hist)
         add_weather_history(db_session, new_location_db_obj.id, response_30day_hist)
