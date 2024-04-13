@@ -176,19 +176,19 @@ def corr_sleep_cloudiness(df_qty_cat):
     df_daily_sleep_time_cloudcover.reset_index(inplace=True)
     df_daily_sleep_time_cloudcover.drop(columns=['index'], inplace=True)
     obs_count = len(df_daily_sleep_time_cloudcover)
-    
+    logger_ws_analysis.info(f"- obs_count: {obs_count}")
     try:
-        if obs_count > 5:# arbitrary minimum
+        # if obs_count > 5:# arbitrary minimum
 
-            # save csv file for user
-            csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_sleep_time_cloudcover.csv")
-            df_daily_sleep_time_cloudcover.to_csv(csv_path_and_filename)
+        # save csv file for user
+        csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_sleep_time_cloudcover.csv")
+        df_daily_sleep_time_cloudcover.to_csv(csv_path_and_filename)
 
-            correlation = df_daily_sleep_time_cloudcover['cloudcover'].corr(df_daily_sleep_time_cloudcover['sleepTimeUserTz'])
-            return correlation, obs_count
-            # return "insufficient data", "insufficient data"
-        else:
-            return "insufficient data", "insufficient data"
+        correlation = df_daily_sleep_time_cloudcover['cloudcover'].corr(df_daily_sleep_time_cloudcover['sleepTimeUserTz'])
+        logger_ws_analysis.info(f"- correlation: {correlation}")
+        return correlation, obs_count
+        # else:
+        #     return "insufficient data", "insufficient data"
     except Exception as e:
         logger_ws_analysis.info(f"error in corr_sleep_heart_rate: {e}")
         return "insufficient data", "insufficient data"
