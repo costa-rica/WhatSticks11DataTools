@@ -192,3 +192,39 @@ def corr_sleep_cloudiness(df_qty_cat):
     except Exception as e:
         logger_ws_analysis.info(f"error in corr_sleep_heart_rate: {e}")
         return "insufficient data", "insufficient data"
+
+def corr_sleep_temperature(df_qty_cat):
+    logger_ws_analysis.info("- in corr_sleep_temperature")
+    user_id = df_qty_cat['user_id'].iloc[0]
+    df_sleep_time = create_df_daily_sleep(df_qty_cat)
+    df_sleep_time.rename(columns=({'dateUserTz_3pm':'dateUserTz'}),inplace=True)
+    df_user_locations_day = create_df_daily_user_location_consecutive(user_id)
+    df_weather_history = create_df_weather_history()
+
+    # Step 2: Perform a left join to merge while keeping all rows from user_locations_day_df
+    df_daily_temperature = pd.merge(df_user_locations_day, df_weather_history[['date', 'location_id', 'temp']],
+                    on=['date', 'location_id'], how='left')
+    
+    df_daily_temperature.rename(columns=({'date':'dateUserTz'}),inplace=True)
+
+    df_daily_sleep_time_temperature = pd.merge(df_sleep_time, df_daily_temperature[['dateUserTz','temp']],
+                                        on=['dateUserTz'],how='left')
+
+    df_daily_sleep_time_temperature.dropna(inplace=True)
+    df_daily_sleep_time_temperature.reset_index(inplace=True)
+    df_daily_sleep_time_temperature.drop(columns=['index'], inplace=True)
+    obs_count = len(df_daily_sleep_time_temperature)
+    logger_ws_analysis.info(f"- obs_count: {obs_count}")
+    try:
+        # save csv file for user
+        csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_sleep_time_temperature.csv")
+        df_daily_sleep_time_temperature.to_csv(csv_path_and_filename)
+
+        correlation = df_daily_sleep_time_temperature['temp'].corr(df_daily_sleep_time_temperature['sleepTimeUserTz'])
+        logger_ws_analysis.info(f"- correlation: {correlation}")
+        return correlation, obs_count
+
+    except Exception as e:
+        logger_ws_analysis.info(f"error in corr_sleep_heart_rate: {e}")
+        return "insufficient data", "insufficient data"
+

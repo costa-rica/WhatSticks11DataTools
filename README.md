@@ -90,8 +90,9 @@ create_df_daily_user_location_consecutive
 
 ### ws_utilities/scheduler/main.py
 interpolate_missing_dates_exclude_references
-- TODO: (possible remove?) This checks for gaps in a user's UserLocationDay. If there it is it fills it in. However, I beleive we don't need this because the ws_analysis (create_df_daily_user_location_consecutive) takes care of any gaps in a user's UserLocationDay.
-- This is used by WS11Scheduler. consider removing this process as it's unnecessary.
+- OBE removed, due to ws_analysis/daily_dfs/user_location_day.py create_df_daily_user_location_consecutive
+- This checks for gaps in a user's UserLocationDay. If there it is it fills it in. 
+
 
 
 ## Contributing

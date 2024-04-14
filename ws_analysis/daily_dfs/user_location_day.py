@@ -4,7 +4,7 @@ import pandas as pd
 # from ws_models import Users, UserLocationDay, Locations
 from datetime import datetime, timedelta
 
-
+# renders the interpolation in WS11Scheduler obsolete
 def create_df_daily_user_location_consecutive(user_id):
     logger_ws_analysis.info("- in create_df_daily_user_location_consecutive -")
 

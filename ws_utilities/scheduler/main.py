@@ -38,45 +38,45 @@ def collect_yesterday_weather_history_from_visual_crossing():
     wrap_up_session(db_session)
 
 
-def interpolate_missing_dates_exclude_references(df):
-    # Ensure the DataFrame is sorted by date
-    df.sort_values(by='date_utc_user_check_in', inplace=True)
+# def interpolate_missing_dates_exclude_references(df):
+#     # Ensure the DataFrame is sorted by date
+#     df.sort_values(by='date_utc_user_check_in', inplace=True)
     
-    # Initialize a list to hold the interpolated rows
-    interpolated_rows = []
+#     # Initialize a list to hold the interpolated rows
+#     interpolated_rows = []
     
-    # Get the current UTC time to use for all interpolated rows
-    current_utc_time = datetime.utcnow()
+#     # Get the current UTC time to use for all interpolated rows
+#     current_utc_time = datetime.utcnow()
     
-    # Iterate through the DataFrame to find gaps and create interpolated rows
-    for i in range(len(df) - 1):
-        current_row = df.iloc[i]
-        next_row = df.iloc[i + 1]
+#     # Iterate through the DataFrame to find gaps and create interpolated rows
+#     for i in range(len(df) - 1):
+#         current_row = df.iloc[i]
+#         next_row = df.iloc[i + 1]
         
-        current_date = current_row['date_utc_user_check_in']
-        next_date = next_row['date_utc_user_check_in']
+#         current_date = current_row['date_utc_user_check_in']
+#         next_date = next_row['date_utc_user_check_in']
         
-        # Calculate the gap in days between current and next date
-        gap_days = (next_date - current_date).days
+#         # Calculate the gap in days between current and next date
+#         gap_days = (next_date - current_date).days
         
-        # If there is a gap, create the necessary interpolated rows
-        for gap_day in range(1, gap_days):
-            interpolated_date = current_date + pd.Timedelta(days=gap_day)
-            interpolated_row = {
-                'user_id': current_row['user_id'],
-                'location_id': current_row['location_id'],
-                'date_utc_user_check_in': interpolated_date,
-                'row_type': 'interpolated',
-                'date_time_utc_user_check_in': current_utc_time,
-                'time_stamp_utc': current_utc_time
-                # Fill other columns as needed, e.g., set to None or default values
-            }
-            interpolated_rows.append(interpolated_row)
+#         # If there is a gap, create the necessary interpolated rows
+#         for gap_day in range(1, gap_days):
+#             interpolated_date = current_date + pd.Timedelta(days=gap_day)
+#             interpolated_row = {
+#                 'user_id': current_row['user_id'],
+#                 'location_id': current_row['location_id'],
+#                 'date_utc_user_check_in': interpolated_date,
+#                 'row_type': 'interpolated',
+#                 'date_time_utc_user_check_in': current_utc_time,
+#                 'time_stamp_utc': current_utc_time
+#                 # Fill other columns as needed, e.g., set to None or default values
+#             }
+#             interpolated_rows.append(interpolated_row)
     
-    # Convert the list of dictionaries to a DataFrame
-    interpolated_df = pd.DataFrame(interpolated_rows)
+#     # Convert the list of dictionaries to a DataFrame
+#     interpolated_df = pd.DataFrame(interpolated_rows)
     
-    return interpolated_df
+#     return interpolated_df
 
 
 def add_weather_history(db_session, location_id, weather_data):
