@@ -32,7 +32,7 @@ def create_user_qty_cat_df(user_id):
     else:
         # query = f"SELECT * FROM apple_health_quantity_category WHERE user_id = {user_id}"
         db_query = db_session.query(AppleHealthQuantityCategory).filter_by(user_id=user_id)
-        df = pd.read_sql_query(db_query, engine)
+        df = pd.read_sql_query(db_query.statement, engine)
     logger_ws_analysis.info(f"user_id: {user_id}")
     # user_tz_str = sess.get(Users,user_id).timezone
     user_tz_str = db_session.get(Users,user_id).timezone
@@ -53,8 +53,6 @@ def create_user_qty_cat_df(user_id):
 
     df = add_timezones_from_UserLocationDay(user_id, df)
     
-
-
     try:
         # Create new columns startDateUserTz and endDateUserTz
         # Apply the adjust_timezone function for startDate and endDate
@@ -106,7 +104,7 @@ def create_user_workouts_df(user_id):
     else:
         # query = f"SELECT * FROM apple_health_workout WHERE user_id = {user_id}"
         db_query = db_session.query(AppleHealthWorkout).filter_by(user_id=user_id)
-        df = pd.read_sql_query(db_query, engine)
+        df = pd.read_sql_query(db_query.statement, engine)
     
     user_tz_str = db_session.get(Users,user_id).timezone
     if user_tz_str == None or user_tz_str == "":
