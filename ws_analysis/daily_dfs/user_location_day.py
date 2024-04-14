@@ -9,7 +9,9 @@ def create_df_daily_user_location_consecutive(user_id):
     logger_ws_analysis.info("- in create_df_daily_user_location_consecutive -")
 
     df_user_location_date = create_user_location_date_df(user_id)
-
+    if len(df_user_location_date) == 0:
+        logger_ws_analysis.info("- User has no location associated due to NO data in User Location Date -")
+        return pd.DataFrame()
     start_date_obj = df_user_location_date['date'].min()
     search_row_date = start_date_obj
     df = pd.DataFrame()

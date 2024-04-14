@@ -161,8 +161,13 @@ def corr_sleep_cloudiness(df_qty_cat):
 
     # df_user_locations_day = create_user_location_date_df(user_id)
     df_user_locations_day = create_df_daily_user_location_consecutive(user_id)
+    if len(df_user_locations_day) == 0:
+        logger_ws_analysis.info("- User has no user location day ")
+        return "insufficient data", "insufficient data"
     df_weather_history = create_df_weather_history()
-
+    if len(df_weather_history) == 0:
+        logger_ws_analysis.info("- NO Weather Data exists ")
+        return "insufficient data", "insufficient data"
     # Step 2: Perform a left join to merge while keeping all rows from user_locations_day_df
     df_daily_cloudcover = pd.merge(df_user_locations_day, df_weather_history[['date', 'location_id', 'cloudcover']],
                         on=['date', 'location_id'], how='left')

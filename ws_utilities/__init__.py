@@ -7,3 +7,6 @@ from .web.admin import create_df_crosswalk, update_and_append_via_df_crosswalk_u
     get_class_from_tablename, create_df_from_db_table_name
 from .visual_crossing_api.vc_api_requests import request_visual_crossing_for_one_day, \
     request_visual_crossing_for_last_30days
+from .dashboard_table_obj.main import create_dashboard_table_object_json_file, \
+    create_data_source_object_json_file
+

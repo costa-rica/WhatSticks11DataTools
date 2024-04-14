@@ -93,6 +93,16 @@ interpolate_missing_dates_exclude_references
 - OBE removed, due to ws_analysis/daily_dfs/user_location_day.py create_df_daily_user_location_consecutive
 - This checks for gaps in a user's UserLocationDay. If there it is it fills it in. 
 
+### dashboard_table_obj
+These functions created the dictionaries that get converted to .json files that get sent to the WS11iOS app for the dashboard.
+This funcationality was formerly in WS11AppleService
+
+#### create_dashboard_table_object_json_file
+- required parameter: user_id (string)
+
+#### create_data_source_object_json_file
+- required parameter: user_id (string)
+
 
 
 ## Contributing
