@@ -31,6 +31,7 @@ def create_df_daily_user_location_consecutive(user_id):
 
         search_row_date = search_row_date + timedelta(days=1)
 
+    # If user has less than 5 days of historical data, extend the history back 14 days
     if len(df) < 5:
         df = extend_historically_user_location_date(df)
 
