@@ -4,7 +4,8 @@ from ws_analysis import create_user_qty_cat_df, corr_sleep_steps, corr_sleep_hea
     create_df_daily_workout_duration, corr_workouts_steps, corr_sleep_workout_dummies, \
     corr_workouts_heart_rate, \
     corr_sleep_cloudiness, corr_sleep_temperature, corr_workouts_cloudiness, \
-    corr_workouts_temperature
+    corr_workouts_temperature, \
+    corr_steps_sleep
 # from common.config_and_logger import config, logger_ws_utilities
 from ..common.config_and_logger import config, logger_ws_utilities
 # from ..common.utilities import wrap_up_session
@@ -246,3 +247,34 @@ def user_workouts_duration_correlations(user_id):
         logger_ws_utilities.info(f"- User_id {user_id} has no df_qty_cat or df_workouts")
         return []
 
+
+def user_steps_count_correlations(user_id):
+    logger_ws_utilities.info("- in user_steps_count_correlations ")
+
+    df_qty_cat = create_user_qty_cat_df(user_id=user_id)
+
+    df_workouts = create_user_workouts_df(user_id)
+
+    if len(df_qty_cat) > 0 and len(df_workouts) > 0:
+        # # df_daily_workouts = create_df_daily_workout_duration(df_workouts)
+        # if len(df_workouts) > 5:
+        logger_ws_utilities.info(f"**** IF before  STEPS and SLEEP has data ***")
+        list_of_arryIndepVarObjects_dict = []
+        # correlation_value, obs_count = corr_workouts_sleep(df_workouts, df_qty_cat)
+        correlation_value, obs_count = corr_steps_sleep(df_qty_cat)
+        if isinstance(obs_count, int):
+            logger_ws_utilities.info(f"****  STEPS and SLEEP has data ***")
+            arryIndepVarObjects_dict = {}
+            arryIndepVarObjects_dict["independentVarName"]= "Sleep Time"
+            arryIndepVarObjects_dict["forDepVarName"]= "Daily Step Count"
+            arryIndepVarObjects_dict["correlationValue"]= correlation_value
+            arryIndepVarObjects_dict["correlationObservationCount"]= obs_count
+            arryIndepVarObjects_dict["definition"]= "The number of hours slept in the previous night"
+            arryIndepVarObjects_dict["noun"]= "hours of sleep the night before"
+            list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
+            logger_ws_utilities.info(f"**** ---> Successfull correlation STEPS and SLEEP <---- ***")
+        return list_of_arryIndepVarObjects_dict
+
+    else:
+        logger_ws_utilities.info(f"- User_id {user_id} has no df_qty_cat or df_workouts")
+        return []

@@ -68,41 +68,49 @@ create_df_daily_user_location_consecutive
 - returns a dataframe with date and location_id
 
 ## Documentation (ws_utilities)
-### visual_crossing_api
-#### request_visual_crossing_for_one_day
+
+### /dashboard_table_obj/
+These functions created the dictionaries that get converted to .json files that get sent to the WS11iOS app for the dashboard.
+This funcationality was formerly in WS11AppleService
+
+#### main.py > create_dashboard_table_object_json_file
+- required parameter: user_id (string)
+- returns nothing but completes with the creation of .json file 
+  - creates file in config.DASHBOARD_FILES_DIR folder
+  - user_data_table_array_json_file_name = f"data_table_objects_array_{int(user_id):04}.json"
+
+#### main.py > create_data_source_object_json_file
+- required parameter: user_id (string)
+- returns nothing but completes with the creation of .json file 
+  - creates file in config.DATA_SOURCE_FILES_DIR folder
+
+### /visual_crossing_api/
+#### vc_api_requests.py > request_visual_crossing_for_one_day
 - required paramters
   - location_db_obj: database object from Locations
   - date_1_start: date string in format `%Y-%m-%d`
 - returns dictionary of weather objects from Visual Crossing for date_1_start
 
-#### request_visual_crossing_for_last_30days
+#### vc_api_requests.py > request_visual_crossing_for_last_30days
 - required paramters
   - location_db_obj: database object from Locations
 - returns list of dictionary of weather objects from Visual Crossing from current day going back 30 days.
 
 
-### ws_utilities/web/admin.py
+### /web/
 - The website upload .zip uses a sequence of functions found in ws_utilites/api/admin.py. Important to note, even if no new users are added, the creation of a crosswalk table (df_crosswalk_users) will still create a df (df_crosswalk_users) that provides a mapping from existing user_ids to the user_ids found in the .zip file. Then convert the ones user_ids from the .zip file and append to the database correctly.
 
-#### create_df_crosswalk
+#### admin.py > create_df_crosswalk
 - even if zip file has no new id's in users of locations it a df_crosswalk will be created
 
 
-### ws_utilities/scheduler/main.py
-interpolate_missing_dates_exclude_references
-- OBE removed, due to ws_analysis/daily_dfs/user_location_day.py create_df_daily_user_location_consecutive
+### /scheduler/
+
+#### main.py > create_df_daily_user_location_consecutive
 - This checks for gaps in a user's UserLocationDay. If there it is it fills it in. 
 
-### dashboard_table_obj
-These functions created the dictionaries that get converted to .json files that get sent to the WS11iOS app for the dashboard.
-This funcationality was formerly in WS11AppleService
-
-#### create_dashboard_table_object_json_file
-- required parameter: user_id (string)
-
-#### create_data_source_object_json_file
-- required parameter: user_id (string)
-
+#### main.py > interpolate_missing_dates_exclude_references
+- OBE removed, due to ws_analysis/daily_dfs/user_location_day.py
 
 
 ## Contributing

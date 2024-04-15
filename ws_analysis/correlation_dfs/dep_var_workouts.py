@@ -27,16 +27,16 @@ def corr_workouts_sleep(df_workouts, df_qty_cat):
         return "insufficient data", "insufficient data"
     df_daily_sleep.rename(columns=({'dateUserTz_3pm':'dateUserTz'}),inplace=True)
 
-    logger_ws_analysis.info("-------- df_daily_sleep ------")
-    logger_ws_analysis.info(df_daily_sleep.dtypes)
-    logger_ws_analysis.info(len(df_daily_sleep))
+    # logger_ws_analysis.info("-------- df_daily_sleep ------")
+    # logger_ws_analysis.info(df_daily_sleep.dtypes)
+    # logger_ws_analysis.info(len(df_daily_sleep))
 
     df_n_minus1_daily_sleep = create_df_n_minus1_daily_sleep(df_daily_sleep)
     df_n_minus1_daily_sleep['dateUserTz']=pd.to_datetime(df_n_minus1_daily_sleep['dateUserTz'])
 
-    logger_ws_analysis.info("-------- df_n_minus1_daily_sleep ------")
-    logger_ws_analysis.info(df_n_minus1_daily_sleep.dtypes)
-    logger_ws_analysis.info(len(df_n_minus1_daily_sleep))
+    # logger_ws_analysis.info("-------- df_n_minus1_daily_sleep ------")
+    # logger_ws_analysis.info(df_n_minus1_daily_sleep.dtypes)
+    # logger_ws_analysis.info(len(df_n_minus1_daily_sleep))
     csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_n_minus1_daily_sleep.csv")
     df_n_minus1_daily_sleep.to_csv(csv_path_and_filename)
 
@@ -44,9 +44,9 @@ def corr_workouts_sleep(df_workouts, df_qty_cat):
     df_daily_workout_duration = create_df_daily_workout_duration(df_workouts)
     df_daily_workout_duration['dateUserTz']=pd.to_datetime(df_daily_workout_duration['dateUserTz'])
 
-    logger_ws_analysis.info("-------- df_daily_workout_duration ------")
-    logger_ws_analysis.info(df_daily_workout_duration.dtypes)
-    logger_ws_analysis.info(len(df_daily_workout_duration))
+    # logger_ws_analysis.info("-------- df_daily_workout_duration ------")
+    # logger_ws_analysis.info(df_daily_workout_duration.dtypes)
+    # logger_ws_analysis.info(len(df_daily_workout_duration))
     csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_workout_duration.csv")
     df_daily_workout_duration.to_csv(csv_path_and_filename)
 
