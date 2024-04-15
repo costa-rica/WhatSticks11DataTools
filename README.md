@@ -67,6 +67,19 @@ create_df_daily_user_location_consecutive
   - end_date: string in format `%Y-%m-%d`
 - returns a dataframe with date and location_id
 
+### daily_dfs
+
+#### user_location_day.py
+create_df_daily_user_location_consecutive
+- purpose to create a consecutive series of historical dates and location_id for the user based on the data they have.
+- if less than 5 days are found then extend_historically_user_location_date is triggered
+
+extend_historically_user_location_date
+- required paramter: df_user_location_date (dataframe object with date and location_id columns)
+- optional parameter: back_to_date (datetime.date object)
+  - if back_to_date is provided the function will extend historically back to the date. Otherwise it will extend back 14 days.
+
+
 ## Documentation (ws_utilities)
 
 ### /dashboard_table_obj/
