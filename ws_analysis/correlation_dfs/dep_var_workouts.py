@@ -9,6 +9,8 @@ from ..daily_dfs.heart_rate import create_df_daily_heart_rate, \
     create_df_n_minus1_daily_heart_rate
 from ..daily_dfs.workouts import create_df_daily_workout_duration, \
     create_df_daily_workout_duration_dummies
+from ..daily_dfs.weather import create_df_weather_history
+from ..daily_dfs.user_location_day import create_df_daily_user_location_consecutive
 
 
 #######################################
@@ -164,4 +166,85 @@ def corr_workouts_heart_rate(df_workouts, df_qty_cat):
     except Exception as e:
         logger_ws_analysis.info(f"error in corr_workouts_sleep: {e}")
         return "insufficient data", "insufficient data"
+
+
+
+def corr_workouts_cloudiness(df_workouts):
+
+    logger_ws_analysis.info("- in corr_workouts_heart_rate")
+    user_id = df_workouts['user_id'].iloc[0]
+
+    df_user_locations_day = create_df_daily_user_location_consecutive(user_id)
+    if len(df_user_locations_day) == 0:
+        logger_ws_analysis.info("- User has no user location day ")
+        return "insufficient data", "insufficient data"
+    df_weather_history = create_df_weather_history()
+    if len(df_weather_history) == 0:
+        logger_ws_analysis.info("- NO Weather Data exists ")
+        return "insufficient data", "insufficient data"
+
+    # Step 2: Perform a left join to merge while keeping all rows from user_locations_day_df
+    df_daily_cloudcover = pd.merge(df_user_locations_day, df_weather_history[['date', 'location_id', 'cloudcover']],
+                        on=['date', 'location_id'], how='left')
+    
+    df_daily_cloudcover.rename(columns=({'date':'dateUserTz'}),inplace=True)
+    df_daily_cloudcover['dateUserTz']=pd.to_datetime(df_daily_cloudcover['dateUserTz'])
+
+    # Step 3: create the workouts dataframe
+    df_daily_workout_duration = create_df_daily_workout_duration(df_workouts)
+    df_daily_workout_duration['dateUserTz']=pd.to_datetime(df_daily_workout_duration['dateUserTz'])
+    
+    df_daily_workout_duration_cloudcover = pd.merge(df_daily_cloudcover,df_daily_workout_duration, on='dateUserTz')
+    df_daily_workout_duration_cloudcover['dateUserTz'] = df_daily_workout_duration_cloudcover['dateUserTz'].dt.strftime('%Y-%m-%d')
+
+    # save csv file for user
+    csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_workout_duration_cloudcover.csv")
+    df_daily_workout_duration_cloudcover.to_csv(csv_path_and_filename)
+
+    correlation = df_daily_workout_duration_cloudcover['duration'].corr(df_daily_workout_duration_cloudcover['cloudcover'])
+    obs_count = len(df_daily_workout_duration_cloudcover)
+    
+    return correlation, obs_count
+
+
+def corr_workouts_temperature(df_workouts):
+
+    logger_ws_analysis.info("- in corr_workouts_temperature")
+    user_id = df_workouts['user_id'].iloc[0]
+
+    df_user_locations_day = create_df_daily_user_location_consecutive(user_id)
+    if len(df_user_locations_day) == 0:
+        logger_ws_analysis.info("- User has no user location day ")
+        return "insufficient data", "insufficient data"
+    df_weather_history = create_df_weather_history()
+    if len(df_weather_history) == 0:
+        logger_ws_analysis.info("- NO Weather Data exists ")
+        return "insufficient data", "insufficient data"
+
+    # Step 2: Perform a left join to merge while keeping all rows from user_locations_day_df
+    df_daily_temperature = pd.merge(df_user_locations_day, df_weather_history[['date', 'location_id', 'temp']],
+                        on=['date', 'location_id'], how='left')
+    
+    df_daily_temperature.rename(columns=({'date':'dateUserTz'}),inplace=True)
+    df_daily_temperature['dateUserTz']=pd.to_datetime(df_daily_temperature['dateUserTz'])
+
+    # Step 3: create the workouts dataframe
+    df_daily_workout_duration = create_df_daily_workout_duration(df_workouts)
+    df_daily_workout_duration['dateUserTz']=pd.to_datetime(df_daily_workout_duration['dateUserTz'])
+    
+    # df_daily_workout_duration_cloudcover = pd.merge(df_daily_temperature,df_daily_workout_duration, on='dateUserTz')
+    df_daily_workout_duration_temperature = pd.merge(df_daily_temperature,df_daily_workout_duration, on='dateUserTz')
+    df_daily_workout_duration_temperature['dateUserTz'] = df_daily_workout_duration_temperature['dateUserTz'].dt.strftime('%Y-%m-%d')
+
+    # save csv file for user
+    csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_workout_duration_temperature.csv")
+    df_daily_workout_duration_temperature.to_csv(csv_path_and_filename)
+
+    correlation = df_daily_workout_duration_temperature['duration'].corr(df_daily_workout_duration_temperature['temp'])
+    obs_count = len(df_daily_workout_duration_temperature)
+    
+    return correlation, obs_count
+
+
+
 
