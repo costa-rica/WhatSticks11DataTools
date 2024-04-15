@@ -1,7 +1,6 @@
 from ..common.config_and_logger import config, logger_ws_analysis
 from ..common.create_user_df import create_user_location_date_df
 import pandas as pd
-# from ws_models import Users, UserLocationDay, Locations
 from datetime import datetime, timedelta
 
 # renders the interpolation in WS11Scheduler obsolete
@@ -12,6 +11,7 @@ def create_df_daily_user_location_consecutive(user_id):
     if len(df_user_location_date) == 0:
         logger_ws_analysis.info("- User has no location associated due to NO data in User Location Date -")
         return pd.DataFrame()
+    
     start_date_obj = df_user_location_date['date'].min()
     search_row_date = start_date_obj
     df = pd.DataFrame()
@@ -30,6 +30,9 @@ def create_df_daily_user_location_consecutive(user_id):
             df = pd.concat([df, df_next_row], ignore_index=True)
 
         search_row_date = search_row_date + timedelta(days=1)
+
+    if len(df) < 5:
+        df = extend_historically_user_location_date(df)
 
     return df
 
@@ -67,3 +70,43 @@ def return_next_day(df_daily_user_location, search_row_date):
             # logger_ws_analysis.info("No matching rows found for the specified criteria in the DataFrame.")
             df = pd.DataFrame(columns=df_daily_user_location.columns)
     return df
+
+
+def extend_historically_user_location_date(df_user_location_date, back_to_date=None):
+    # Check if the dataframe is empty
+    if df_user_location_date.empty:
+        raise ValueError("The dataframe is empty")
+    
+    # Find the oldest date in the dataframe
+    oldest_date = df_user_location_date['date'].min()
+    
+    # Determine the backfill start date
+    if back_to_date is None:
+        back_to_date = oldest_date - timedelta(days=14)
+    
+    # Check if back_to_date is already before the oldest date
+    if back_to_date >= oldest_date:
+        return df_user_location_date
+    
+    # Find the location_id of the oldest date entry
+    oldest_location_id = df_user_location_date.loc[df_user_location_date['date'] == oldest_date, 'location_id'].iloc[0]
+    
+    # Generate the date range from back_to_date to the day before the oldest_date
+    new_dates = pd.date_range(start=back_to_date, end=oldest_date - timedelta(days=1), freq='D')
+    
+    # Create a new dataframe with these dates, converting Timestamp to datetime.date
+    new_df = pd.DataFrame({
+        'date': new_dates.date,
+        'location_id': oldest_location_id
+    })
+    
+    # Concatenate the new dataframe with the original dataframe
+    extended_df = pd.concat([new_df, df_user_location_date]).sort_values(by='date').reset_index(drop=True)
+    
+    return extended_df
+
+# Example usage:
+# Assuming df_user_location_date is your existing dataframe
+# extended_df = extend_historically_user_location_date(df_user_location_date, back_to_date=datetime.date(2020, 1, 1))
+
+

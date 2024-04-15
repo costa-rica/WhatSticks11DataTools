@@ -17,5 +17,6 @@ from .correlation_dfs.dep_var_workouts import corr_workouts_sleep, \
 from .correlation_dfs.dep_var_steps import corr_steps_sleep, corr_steps_heart_rate, \
     corr_steps_cloudiness, corr_steps_temperature
 from .daily_dfs.weather import create_df_weather_history
-from .daily_dfs.user_location_day import create_df_daily_user_location_consecutive
+from .daily_dfs.user_location_day import create_df_daily_user_location_consecutive, \
+    extend_historically_user_location_date
 
