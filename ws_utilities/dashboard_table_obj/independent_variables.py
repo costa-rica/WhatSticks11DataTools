@@ -7,19 +7,16 @@ from ws_analysis import create_user_qty_cat_df, corr_sleep_steps, corr_sleep_hea
     corr_workouts_temperature, \
     corr_steps_sleep, corr_steps_heart_rate, corr_steps_cloudiness, \
     corr_steps_temperature
-# from common.config_and_logger import config, logger_ws_utilities
 from ..common.config_and_logger import config, logger_ws_utilities
-# from ..common.utilities import wrap_up_session
+from ..web.admin import create_df_from_db_table_name
 import os
 import numpy as np
 
 def user_sleep_time_correlations(user_id):
     logger_ws_utilities.info(f"- in user_sleep_time_correlations for user_id: {user_id} ")
 
-    # df_qty_cat, sampleTypeListQtyCat = create_user_qty_cat_df(user_id=user_id,user_tz_str=timezone_str)
-    # df_qty_cat, sampleTypeListQtyCat = create_user_qty_cat_df(user_id=user_id)
     df_qty_cat = create_user_qty_cat_df(user_id=user_id)
-    # if sampleTypeListQtyCat != "insufficient data":
+
     if len(df_qty_cat) > 0:
         list_of_arryIndepVarObjects_dict = []
         # if 'HKCategoryTypeIdentifierSleepAnalysis' in sampleTypeListQtyCat:
@@ -59,10 +56,8 @@ def user_sleep_time_correlations(user_id):
         else:
             logger_ws_utilities.info(f"- There are NO Sleep Analysis rows !!!! -")
         # check if user has workouts
-        # df_workouts, sampleTypeListWorkouts = create_user_workouts_df(user_id,user_tz_str=timezone_str)
-        # df_workouts, sampleTypeListWorkouts = create_user_workouts_df(user_id)
         df_workouts = create_user_workouts_df(user_id)
-        # if sampleTypeListWorkouts != "insufficient data":
+
         if len(df_workouts) > 0:
             # Workouts 
             correlation_value, obs_count = corr_sleep_workouts(df_qty_cat, df_workouts)
@@ -109,36 +104,39 @@ def user_sleep_time_correlations(user_id):
         else:
             logger_ws_utilities.info(f"- There are NO Workout rows !!!! -")
         
+        # if User has no user_location_day, skip weather
+        df = create_df_from_db_table_name("user_location_day")
+        df_user_location_day = df[df.user_id == user_id]
+        if len(df_user_location_day) > 0:
+            # Cloudiness
+            correlation_value, obs_count = corr_sleep_cloudiness(df_qty_cat)
+            logger_ws_utilities.info(f"- correlation_value, obs_count: {correlation_value}, {obs_count} -")
+            if isinstance(obs_count, int):
+                arryIndepVarObjects_dict = {}
+                arryIndepVarObjects_dict["independentVarName"]= "Cloud Cover"
+                arryIndepVarObjects_dict["forDepVarName"]= "Sleep Time"
+                arryIndepVarObjects_dict["correlationValue"]= correlation_value
+                arryIndepVarObjects_dict["correlationObservationCount"]= obs_count
+                arryIndepVarObjects_dict["definition"]= "An index capturing cloudiness in a day of your location."
+                arryIndepVarObjects_dict["noun"]= "daily cloud cover"
+                list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
+            else:
+                logger_ws_utilities.info(f"- No weather -")
 
-        # Cloudiness
-        correlation_value, obs_count = corr_sleep_cloudiness(df_qty_cat)
-        logger_ws_utilities.info(f"- correlation_value, obs_count: {correlation_value}, {obs_count} -")
-        if isinstance(obs_count, int):
-            arryIndepVarObjects_dict = {}
-            arryIndepVarObjects_dict["independentVarName"]= "Cloud Cover"
-            arryIndepVarObjects_dict["forDepVarName"]= "Sleep Time"
-            arryIndepVarObjects_dict["correlationValue"]= correlation_value
-            arryIndepVarObjects_dict["correlationObservationCount"]= obs_count
-            arryIndepVarObjects_dict["definition"]= "An index capturing cloudiness in a day of your location."
-            arryIndepVarObjects_dict["noun"]= "daily cloud cover"
-            list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
-        else:
-            logger_ws_utilities.info(f"- No weather -")
-
-        # Temperature
-        correlation_value, obs_count = corr_sleep_temperature(df_qty_cat)
-        logger_ws_utilities.info(f"- correlation_value, obs_count: {correlation_value}, {obs_count} -")
-        if isinstance(obs_count, int):
-            arryIndepVarObjects_dict = {}
-            arryIndepVarObjects_dict["independentVarName"]= "Temperature"
-            arryIndepVarObjects_dict["forDepVarName"]= "Sleep Time"
-            arryIndepVarObjects_dict["correlationValue"]= correlation_value
-            arryIndepVarObjects_dict["correlationObservationCount"]= obs_count
-            arryIndepVarObjects_dict["definition"]= "The average temperature in a day of your location."
-            arryIndepVarObjects_dict["noun"]= "daily average temperature"
-            list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
-        else:
-            logger_ws_utilities.info(f"- No weather -")
+            # Temperature
+            correlation_value, obs_count = corr_sleep_temperature(df_qty_cat)
+            logger_ws_utilities.info(f"- correlation_value, obs_count: {correlation_value}, {obs_count} -")
+            if isinstance(obs_count, int):
+                arryIndepVarObjects_dict = {}
+                arryIndepVarObjects_dict["independentVarName"]= "Temperature"
+                arryIndepVarObjects_dict["forDepVarName"]= "Sleep Time"
+                arryIndepVarObjects_dict["correlationValue"]= correlation_value
+                arryIndepVarObjects_dict["correlationObservationCount"]= obs_count
+                arryIndepVarObjects_dict["definition"]= "The average temperature in a day of your location."
+                arryIndepVarObjects_dict["noun"]= "daily average temperature"
+                list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
+            else:
+                logger_ws_utilities.info(f"- No weather -")
     try:
         for indVarObj in list_of_arryIndepVarObjects_dict:
             if indVarObj.get('correlationValue') != 'insufficient data':
@@ -146,7 +144,9 @@ def user_sleep_time_correlations(user_id):
                 logger_ws_utilities.info(f"{list_of_arryIndepVarObjects_dict}")
 
                 return list_of_arryIndepVarObjects_dict
-    except:
+    except Exception as e:
+        logger_ws_utilities.info(f"- failed to return list_of_arryIndepVarObjects_dict (for user_sleep_time_correlations) -")
+        logger_ws_utilities.info(f"{type(e).__name__}: {e}")
         return []
 
 
@@ -208,41 +208,47 @@ def user_workouts_duration_correlations(user_id):
                 arryIndepVarObjects_dict["noun"]= "daily average heart rate"
                 list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
 
+            # if User has no user_location_day, skip weather
+            df = create_df_from_db_table_name("user_location_day")
+            df_user_location_day = df[df.user_id == user_id]
+            if len(df_user_location_day) > 0:
 
-            # Cloudiness
-            correlation_value, obs_count = corr_workouts_cloudiness(df_workouts)
-            logger_ws_utilities.info(f"- correlation_value, obs_count: {correlation_value}, {obs_count} -")
-            if isinstance(obs_count, int):
-                arryIndepVarObjects_dict = {}
-                arryIndepVarObjects_dict["independentVarName"]= "Cloud Cover"
-                arryIndepVarObjects_dict["forDepVarName"]= "Workout Duration"
-                arryIndepVarObjects_dict["correlationValue"]= correlation_value
-                arryIndepVarObjects_dict["correlationObservationCount"]= obs_count
-                arryIndepVarObjects_dict["definition"]= "An index capturing cloudiness in a day of your location."
-                arryIndepVarObjects_dict["noun"]= "daily cloud cover"
-                list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
-            else:
-                logger_ws_utilities.info(f"- No weather -")
+                # Cloudiness
+                correlation_value, obs_count = corr_workouts_cloudiness(df_workouts)
+                logger_ws_utilities.info(f"- correlation_value, obs_count: {correlation_value}, {obs_count} -")
+                if isinstance(obs_count, int):
+                    arryIndepVarObjects_dict = {}
+                    arryIndepVarObjects_dict["independentVarName"]= "Cloud Cover"
+                    arryIndepVarObjects_dict["forDepVarName"]= "Workout Duration"
+                    arryIndepVarObjects_dict["correlationValue"]= correlation_value
+                    arryIndepVarObjects_dict["correlationObservationCount"]= obs_count
+                    arryIndepVarObjects_dict["definition"]= "An index capturing cloudiness in a day of your location."
+                    arryIndepVarObjects_dict["noun"]= "daily cloud cover"
+                    list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
+                else:
+                    logger_ws_utilities.info(f"- No weather -")
 
-            # Temperature
-            correlation_value, obs_count = corr_workouts_temperature(df_workouts)
-            logger_ws_utilities.info(f"- correlation_value, obs_count: {correlation_value}, {obs_count} -")
-            if isinstance(obs_count, int):
-                arryIndepVarObjects_dict = {}
-                arryIndepVarObjects_dict["independentVarName"]= "Temperature"
-                arryIndepVarObjects_dict["forDepVarName"]= "Workout Duration"
-                arryIndepVarObjects_dict["correlationValue"]= correlation_value
-                arryIndepVarObjects_dict["correlationObservationCount"]= obs_count
-                arryIndepVarObjects_dict["definition"]= "The average temperature in a day of your location."
-                arryIndepVarObjects_dict["noun"]= "daily average temperature"
-                list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
-            else:
-                logger_ws_utilities.info(f"- No weather -")
+                # Temperature
+                correlation_value, obs_count = corr_workouts_temperature(df_workouts)
+                logger_ws_utilities.info(f"- correlation_value, obs_count: {correlation_value}, {obs_count} -")
+                if isinstance(obs_count, int):
+                    arryIndepVarObjects_dict = {}
+                    arryIndepVarObjects_dict["independentVarName"]= "Temperature"
+                    arryIndepVarObjects_dict["forDepVarName"]= "Workout Duration"
+                    arryIndepVarObjects_dict["correlationValue"]= correlation_value
+                    arryIndepVarObjects_dict["correlationObservationCount"]= obs_count
+                    arryIndepVarObjects_dict["definition"]= "The average temperature in a day of your location."
+                    arryIndepVarObjects_dict["noun"]= "daily average temperature"
+                    list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
+                else:
+                    logger_ws_utilities.info(f"- No weather -")
 
 
         try:
             return list_of_arryIndepVarObjects_dict
-        except:
+        except Exception as e:
+            logger_ws_utilities.info(f"- failed to return list_of_arryIndepVarObjects_dict (for user_workouts_duration_correlations) -")
+            logger_ws_utilities.info(f"{type(e).__name__}: {e}")
             return []
     else:
         logger_ws_utilities.info(f"- User_id {user_id} has no df_qty_cat or df_workouts")
@@ -288,37 +294,45 @@ def user_steps_count_correlations(user_id):
             list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
             logger_ws_utilities.info(f"**** ---> Successfull correlation STEPS and SLEEP <---- ***")
 
+        # if User has no user_location_day, skip weather
+        df = create_df_from_db_table_name("user_location_day")
+        df_user_location_day = df[df.user_id == user_id]
+        if len(df_user_location_day) > 0:
+            correlation_value, obs_count = corr_steps_cloudiness(df_qty_cat)
+            logger_ws_utilities.info(f"- correlation_value, obs_count: {correlation_value}, {obs_count} -")
+            if isinstance(obs_count, int):
+                arryIndepVarObjects_dict = {}
+                arryIndepVarObjects_dict["independentVarName"]= "Cloud Cover"
+                arryIndepVarObjects_dict["forDepVarName"]= "Daily Step Count"
+                arryIndepVarObjects_dict["correlationValue"]= correlation_value
+                arryIndepVarObjects_dict["correlationObservationCount"]= obs_count
+                arryIndepVarObjects_dict["definition"]= "An index capturing cloudiness in a day of your location."
+                arryIndepVarObjects_dict["noun"]= "daily cloud cover"
+                list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
+            else:
+                logger_ws_utilities.info(f"- No weather -")
 
-        correlation_value, obs_count = corr_steps_cloudiness(df_qty_cat)
-        logger_ws_utilities.info(f"- correlation_value, obs_count: {correlation_value}, {obs_count} -")
-        if isinstance(obs_count, int):
-            arryIndepVarObjects_dict = {}
-            arryIndepVarObjects_dict["independentVarName"]= "Cloud Cover"
-            arryIndepVarObjects_dict["forDepVarName"]= "Daily Step Count"
-            arryIndepVarObjects_dict["correlationValue"]= correlation_value
-            arryIndepVarObjects_dict["correlationObservationCount"]= obs_count
-            arryIndepVarObjects_dict["definition"]= "An index capturing cloudiness in a day of your location."
-            arryIndepVarObjects_dict["noun"]= "daily cloud cover"
-            list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
-        else:
-            logger_ws_utilities.info(f"- No weather -")
 
+            correlation_value, obs_count = corr_steps_temperature(df_qty_cat)
+            logger_ws_utilities.info(f"- correlation_value, obs_count: {correlation_value}, {obs_count} -")
+            if isinstance(obs_count, int):
+                arryIndepVarObjects_dict = {}
+                arryIndepVarObjects_dict["independentVarName"]= "Temperature"
+                arryIndepVarObjects_dict["forDepVarName"]= "Daily Step Count"
+                arryIndepVarObjects_dict["correlationValue"]= correlation_value
+                arryIndepVarObjects_dict["correlationObservationCount"]= obs_count
+                arryIndepVarObjects_dict["definition"]= "The average temperature in a day of your location."
+                arryIndepVarObjects_dict["noun"]= "daily average temperature"
+                list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
+            else:
+                logger_ws_utilities.info(f"- No weather -")
 
-        correlation_value, obs_count = corr_steps_temperature(df_qty_cat)
-        logger_ws_utilities.info(f"- correlation_value, obs_count: {correlation_value}, {obs_count} -")
-        if isinstance(obs_count, int):
-            arryIndepVarObjects_dict = {}
-            arryIndepVarObjects_dict["independentVarName"]= "Temperature"
-            arryIndepVarObjects_dict["forDepVarName"]= "Daily Step Count"
-            arryIndepVarObjects_dict["correlationValue"]= correlation_value
-            arryIndepVarObjects_dict["correlationObservationCount"]= obs_count
-            arryIndepVarObjects_dict["definition"]= "The average temperature in a day of your location."
-            arryIndepVarObjects_dict["noun"]= "daily average temperature"
-            list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
-        else:
-            logger_ws_utilities.info(f"- No weather -")
-
-        return list_of_arryIndepVarObjects_dict
+        try:
+            return list_of_arryIndepVarObjects_dict
+        except Exception as e:
+            logger_ws_utilities.info(f"- failed to return list_of_arryIndepVarObjects_dict (for user_steps_count_correlations) -")
+            logger_ws_utilities.info(f"{type(e).__name__}: {e}")
+            return []
 
     else:
         logger_ws_utilities.info(f"- User_id {user_id} has no df_qty_cat or df_workouts")
