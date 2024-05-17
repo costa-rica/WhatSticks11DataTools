@@ -356,9 +356,11 @@ def get_class_from_tablename(tablename):
       return c
 
 def create_df_from_db_table_name(table_name):
+    logger_ws_utilities.info("- in create_df_from_db_table_name -")
     db_session = DatabaseSession()# This new db_session is ok, becuase this session is isolated, to just get data into a dataframe (open an close is ok)
     sqlalchemy_table_object = get_class_from_tablename(table_name)
     df_db_query = db_session.query(sqlalchemy_table_object)
     df_from_db = pd.read_sql(df_db_query.statement, engine)
+
     wrap_up_session(db_session)
     return df_from_db

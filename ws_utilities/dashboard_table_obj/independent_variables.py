@@ -107,6 +107,8 @@ def user_sleep_time_correlations(user_id):
         # if User has no user_location_day, skip weather
         df = create_df_from_db_table_name("user_location_day")
         df_user_location_day = df[df.user_id == user_id]
+        logger_ws_utilities.info(f"- checking df_user_location_day for weather correlations -")
+        logger_ws_utilities.info(f"- len(df_user_location_day): {len(df_user_location_day)} -")
         if len(df_user_location_day) > 0:
             # Cloudiness
             correlation_value, obs_count = corr_sleep_cloudiness(df_qty_cat)

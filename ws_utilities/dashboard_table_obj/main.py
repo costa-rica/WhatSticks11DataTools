@@ -14,6 +14,8 @@ import json
 def create_dashboard_table_object_json_file(user_id):
     logger_ws_utilities.info(f"- in create_dashboard_table_object_json_file (ws_utilities) -")
     logger_ws_utilities.info(f"- for user: {user_id} -")
+    user_id = int(user_id)
+    logger_ws_utilities.info(f"- @ STEP 6 -")
     array_dashboard_table_object = []
 
     ### CREATE sleep_time dashbaord object ####
@@ -137,7 +139,7 @@ def create_dashboard_table_object_json_file(user_id):
 
 def create_data_source_object_json_file(user_id):
     logger_ws_utilities.info(f"- WSAS creating data source object file for user: {user_id} -")
-
+    logger_ws_utilities.info(f"- @ STEP 5 -")
     list_data_source_objects = []
 
 
@@ -163,5 +165,7 @@ def create_data_source_object_json_file(user_id):
     logger_ws_utilities.info(f"Writing file name: {json_data_path_and_name}")
     with open(json_data_path_and_name, 'w') as file:
         json.dump(list_data_source_objects, file)
+    
+    logger_ws_utilities.info(f"- @ STEP 5 END-")
 
 
