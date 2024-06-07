@@ -1,17 +1,26 @@
 import pandas as pd;import numpy as np
 from ..common.config_and_logger import config, logger_ws_analysis
 import os
-from ..daily_dfs.sleep_time import create_df_daily_sleep, \
-    create_df_n_minus1_daily_sleep
-from ..daily_dfs.steps import create_df_daily_steps, \
-    create_df_n_minus1_daily_steps
-from ..daily_dfs.heart_rate import create_df_daily_heart_rate, \
-    create_df_n_minus1_daily_heart_rate
+from ..daily_dfs.sleep_time import create_df_daily_sleep
+    
+from ..daily_dfs.steps import create_df_daily_steps
+from ..daily_dfs.heart_rate import create_df_daily_heart_rate
 from ..daily_dfs.workouts import create_df_daily_workout_duration, \
     create_df_daily_workout_duration_dummies
 from ..common.create_user_df import create_user_location_date_df
 from ..daily_dfs.weather import create_df_weather_history
 from ..daily_dfs.user_location_day import create_df_daily_user_location_consecutive
+
+### NOTE: this would cause an circular reference error:
+# from ws_utilities import create_df_from_db_table_name
+
+#############################################################################################################################
+# NOTE: Since these functions are never used here ALL sleep correlations are assuming sleep is the depenedent variable.
+# i.e. things affect sleep, not sleep affecting heart rate, steps, etc.,
+# create_df_n_minus1_daily_sleep
+# create_df_n_minus1_daily_steps
+# create_df_n_minus1_daily_heart_rate
+#############################################################################################################################
 
 # df here would come from create_user_df create_user_qty_cat_df
 def corr_sleep_steps(df):
@@ -30,6 +39,13 @@ def corr_sleep_steps(df):
 
             # This will keep only the rows that have matching 'dateUserTz' values in both dataframes
             df_daily_sleep_steps = pd.merge(df_daily_sleep,df_daily_steps, on='dateUserTz')
+
+            # # Check if user has data across locations
+            # user_locations_list_unique = create_user_location_date_df(user_id)
+            # if len(user_locations_list_unique)>0:
+            #     df_loctions = create_df_from_db_table_name('locations')
+
+
             # save csv file for user
             csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_sleep_steps.csv")
             df_daily_sleep_steps.to_csv(csv_path_and_filename)
@@ -97,8 +113,8 @@ def corr_sleep_workouts(df_qty_cat, df_workouts):
             # This will keep only the rows that have matching 'dateUserTz' values in both dataframes
             df_daily_sleep_workout_duration = pd.merge(df_daily_sleep,df_daily_workout_duration, on='dateUserTz')
             # # save csv file for user
-            # csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_sleep_workout_duration.csv")
-            # df_daily_sleep_workout_duration.to_csv(csv_path_and_filename)
+            csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_sleep_workout_duration.csv")
+            df_daily_sleep_workout_duration.to_csv(csv_path_and_filename)
             # Calculate the correlation between step_count and sleepTimeUserTz
             correlation = df_daily_sleep_workout_duration['duration'].corr(df_daily_sleep_workout_duration['sleepTimeUserTz'])
             obs_count = len(df_daily_sleep_workout_duration)
@@ -161,6 +177,10 @@ def corr_sleep_cloudiness(df_qty_cat):
 
     # df_user_locations_day = create_user_location_date_df(user_id)
     df_user_locations_day = create_df_daily_user_location_consecutive(user_id)
+    # logger_ws_analysis.info(f"---------> df_user_locations_day columns: ")
+    # logger_ws_analysis.info(f"{df_user_locations_day.columns}")
+    # logger_ws_analysis.info(f"---------> df_user_locations_day columns: ")
+    # logger_ws_analysis.info(f"---------> *********************** ")
     if len(df_user_locations_day) == 0:
         logger_ws_analysis.info("- User has no user location day ")
         return "insufficient data", "insufficient data"
@@ -174,8 +194,14 @@ def corr_sleep_cloudiness(df_qty_cat):
     
     df_daily_cloudcover.rename(columns=({'date':'dateUserTz'}),inplace=True)
 
-    df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, df_daily_cloudcover[['dateUserTz','cloudcover']],
-                                        on=['dateUserTz'],how='left')
+    # if use has recorded more than one city then add to the csv file
+    if len(df_daily_cloudcover.city.unique()) > 1:
+        df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, 
+                                            df_daily_cloudcover[['dateUserTz','cloudcover','location_id','city','country','tz_id']],
+                                            on=['dateUserTz'],how='left')
+    else:
+        df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, df_daily_cloudcover[['dateUserTz','cloudcover']],
+                                            on=['dateUserTz'],how='left')
 
     df_daily_sleep_time_cloudcover.dropna(inplace=True)
     df_daily_sleep_time_cloudcover.reset_index(inplace=True)

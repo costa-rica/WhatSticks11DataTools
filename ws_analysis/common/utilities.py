@@ -17,6 +17,7 @@ def convert_to_user_tz(utc_str, user_tz_str):
     return user_time
 
 # Function to determine the dateUserTz_3pm
+# if the user's time of sleep is before 3pm we count it as the prior day's sleep
 def get_dateUserTz_3pm(row):
     if row['startDateUserTz'].time() >= pd.Timestamp('15:00:00').time():
         return row['dateUserTz']

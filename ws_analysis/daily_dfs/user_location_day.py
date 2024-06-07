@@ -26,7 +26,16 @@ def create_df_daily_user_location_consecutive(user_id):
             df = pd.concat([df, df_next_row], ignore_index=True)
         else:
             location_id = df_next_row.location_id.loc[0]
-            df_next_row = pd.DataFrame({'date': [search_row_date], 'location_id': [location_id]})
+            city = df_next_row.city.loc[0]
+            country = df_next_row.country.loc[0]
+            tz_id = df_next_row.tz_id.loc[0]
+            df_next_row = pd.DataFrame({
+                'date': [search_row_date], 
+                'location_id': [location_id],
+                'city': [city],
+                'country': [country],
+                'tz_id': [tz_id]
+                })
             df = pd.concat([df, df_next_row], ignore_index=True)
 
         search_row_date = search_row_date + timedelta(days=1)

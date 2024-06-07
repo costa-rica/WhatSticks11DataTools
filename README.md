@@ -119,11 +119,8 @@ This funcationality was formerly in WS11AppleService
 
 ### /scheduler/
 
-#### main.py > create_df_daily_user_location_consecutive
-- This checks for gaps in a user's UserLocationDay. If there it is it fills it in. 
-
-#### main.py > interpolate_missing_dates_exclude_references
-- OBE removed, due to ws_analysis/daily_dfs/user_location_day.py
+#### collect_yesterday_weather_history_from_visual_crossing()
+#### add_weather_history(db_session, location_id, weather_data)
 
 
 ## Contributing

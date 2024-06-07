@@ -159,9 +159,22 @@ def create_user_workouts_df(user_id):
 def create_user_location_date_df(user_id):
     logger_ws_analysis.info("- in create_user_location_date_df")
     db_session = DatabaseSession()
-    user_locations_day_query = db_session.query(UserLocationDay).filter_by(user_id = user_id)
-    user_locations_day_df = pd.read_sql(user_locations_day_query.statement, engine)
+    query_user_locations_day = db_session.query(UserLocationDay).filter_by(user_id = user_id)
+    user_locations_day_df = pd.read_sql(query_user_locations_day.statement, engine)
     user_locations_day_df.rename(columns={'date_utc_user_check_in': 'date'},inplace=True)
+    
+    query_list_locations_obj = db_session.query(Locations)
+    df_locations = pd.read_sql(query_list_locations_obj.statement, engine)
+    df_locations.rename(columns={'id': 'location_id'}, inplace=True)
+    logger_ws_analysis.info(f"df_locations columns: {df_locations.columns}")
+    df = pd.merge(user_locations_day_df, 
+                    df_locations[['location_id','city','country','tz_id']],
+                    on=['location_id'],how='left')
+
     wrap_up_session(db_session)
-    return user_locations_day_df[['date','location_id']]
+
+    logger_ws_analysis.info(f"df columns: {df.columns}")
+
+    # return user_locations_day_df[['date','location_id']]
+    return df[['date','location_id','city','country','tz_id']]
 

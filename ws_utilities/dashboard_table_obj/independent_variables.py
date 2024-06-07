@@ -281,7 +281,7 @@ def user_steps_count_correlations(user_id):
             arryIndepVarObjects_dict["definition"]= "The number of hours slept in the previous night"
             arryIndepVarObjects_dict["noun"]= "hours of sleep the night before"
             list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
-            logger_ws_utilities.info(f"**** ---> Successfull correlation STEPS and SLEEP <---- ***")
+            # logger_ws_utilities.info(f"**** ---> Successfull correlation STEPS and SLEEP <---- ***")
 
         correlation_value, obs_count = corr_steps_heart_rate(df_qty_cat)
         if isinstance(obs_count, int):
@@ -294,7 +294,7 @@ def user_steps_count_correlations(user_id):
             arryIndepVarObjects_dict["definition"]= "The average heart rate of the previous day"
             arryIndepVarObjects_dict["noun"]= "average heart rate in the previous day"
             list_of_arryIndepVarObjects_dict.append(arryIndepVarObjects_dict)
-            logger_ws_utilities.info(f"**** ---> Successfull correlation STEPS and SLEEP <---- ***")
+            # logger_ws_utilities.info(f"**** ---> Successfull correlation STEPS and SLEEP <---- ***")
 
         # if User has no user_location_day, skip weather
         df = create_df_from_db_table_name("user_location_day")
