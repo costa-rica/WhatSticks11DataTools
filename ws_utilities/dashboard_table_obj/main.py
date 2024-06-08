@@ -6,9 +6,10 @@ from .independent_variables import user_sleep_time_correlations, \
     user_workouts_duration_correlations, user_steps_count_correlations
 from .utilities import get_apple_health_count_date
 import os
-from ws_models import DatabaseSession
+from ws_models import DatabaseSession, Users
 import pandas as pd
 import json
+from ws_analysis import create_df_daily_user_location_consecutive
 
 
 def create_dashboard_table_object_json_file(user_id):
@@ -128,7 +129,16 @@ def create_dashboard_table_object_json_file(user_id):
         with open(json_data_path_and_name, 'w') as file:
             json.dump(array_dashboard_table_object, file)
         
+        db_session = DatabaseSession()
+        user_obj = db_session.get(Users,user_id)
+        if user_obj.location_reoccuring_permission==True:
+            # create user_location_day csv file
+            df_user_locations_day = create_df_daily_user_location_consecutive(user_id)
 
+            # save csv file for user
+            csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_user_city_by_day.csv")
+            df_user_locations_day.to_csv(csv_path_and_filename)
+        wrap_up_session(db_session)
         logger_ws_utilities.info(f"- WSAS COMPLETED dashboard file for user: {user_id} -")
         logger_ws_utilities.info(f"- WSAS COMPLETED dashboard file path: {json_data_path_and_name} -")
     else:

@@ -44,6 +44,20 @@ def corr_sleep_steps(df):
             # user_locations_list_unique = create_user_location_date_df(user_id)
             # if len(user_locations_list_unique)>0:
             #     df_loctions = create_df_from_db_table_name('locations')
+            
+            # df_user_locations_day = create_df_daily_user_location_consecutive(user_id)
+
+
+            # # if use has recorded more than one city then add to the csv file
+            # if len(df_daily_cloudcover.city.unique()) > 1:
+            #     df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, 
+            #                                         df_daily_cloudcover[['dateUserTz','cloudcover','location_id','city','country','tz_id']],
+            #                                         on=['dateUserTz'],how='left')
+            # else:
+            #     df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, df_daily_cloudcover[['dateUserTz','cloudcover']],
+            #                                         on=['dateUserTz'],how='left')
+
+
 
 
             # save csv file for user
@@ -194,14 +208,14 @@ def corr_sleep_cloudiness(df_qty_cat):
     
     df_daily_cloudcover.rename(columns=({'date':'dateUserTz'}),inplace=True)
 
-    # if use has recorded more than one city then add to the csv file
-    if len(df_daily_cloudcover.city.unique()) > 1:
-        df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, 
-                                            df_daily_cloudcover[['dateUserTz','cloudcover','location_id','city','country','tz_id']],
-                                            on=['dateUserTz'],how='left')
-    else:
-        df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, df_daily_cloudcover[['dateUserTz','cloudcover']],
-                                            on=['dateUserTz'],how='left')
+    # # if use has recorded more than one city then add to the csv file
+    # if len(df_daily_cloudcover.city.unique()) > 1:
+    #     df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, 
+    #                                         df_daily_cloudcover[['dateUserTz','cloudcover','location_id','city','country','tz_id']],
+    #                                         on=['dateUserTz'],how='left')
+    # else:
+    df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, df_daily_cloudcover[['dateUserTz','cloudcover']],
+                                        on=['dateUserTz'],how='left')
 
     df_daily_sleep_time_cloudcover.dropna(inplace=True)
     df_daily_sleep_time_cloudcover.reset_index(inplace=True)
