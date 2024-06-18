@@ -22,6 +22,7 @@ from ..daily_dfs.user_location_day import create_df_daily_user_location_consecut
 # create_df_n_minus1_daily_heart_rate
 #############################################################################################################################
 
+#sleep changed
 # df here would come from create_user_df create_user_qty_cat_df
 def corr_sleep_steps(df):
     logger_ws_analysis.info("- in corr_sleep_steps")
@@ -30,41 +31,23 @@ def corr_sleep_steps(df):
     df_daily_sleep = create_df_daily_sleep(df)
     if len(df_daily_sleep) == 0:
         return "insufficient data", "insufficient data"
-    df_daily_sleep.rename(columns=({'dateUserTz_3pm':'dateUserTz'}),inplace=True)
+    # df_daily_sleep.rename(columns=({'dateUserTz_3pm':'dateUserTz'}),inplace=True)
+    df_daily_sleep.rename(columns=({'startDate_dateOnly_sleep_adj':'startDate_dateOnly'}),inplace=True)
 
     # if 'HKCategoryTypeIdentifierSleepAnalysis' in list_of_user_data:
     df_daily_steps = create_df_daily_steps(df)
     try:
         if len(df_daily_steps) > 5:# arbitrary minimum
 
-            # This will keep only the rows that have matching 'dateUserTz' values in both dataframes
-            df_daily_sleep_steps = pd.merge(df_daily_sleep,df_daily_steps, on='dateUserTz')
-
-            # # Check if user has data across locations
-            # user_locations_list_unique = create_user_location_date_df(user_id)
-            # if len(user_locations_list_unique)>0:
-            #     df_loctions = create_df_from_db_table_name('locations')
-            
-            # df_user_locations_day = create_df_daily_user_location_consecutive(user_id)
-
-
-            # # if use has recorded more than one city then add to the csv file
-            # if len(df_daily_cloudcover.city.unique()) > 1:
-            #     df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, 
-            #                                         df_daily_cloudcover[['dateUserTz','cloudcover','location_id','city','country','tz_id']],
-            #                                         on=['dateUserTz'],how='left')
-            # else:
-            #     df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, df_daily_cloudcover[['dateUserTz','cloudcover']],
-            #                                         on=['dateUserTz'],how='left')
-
-
+            # This will keep only the rows that have matching 'startDate_dateOnly' values in both dataframes
+            df_daily_sleep_steps = pd.merge(df_daily_sleep,df_daily_steps, on='startDate_dateOnly')
 
 
             # save csv file for user
             csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_sleep_steps.csv")
             df_daily_sleep_steps.to_csv(csv_path_and_filename)
-            # Calculate the correlation between step_count and sleepTimeUserTz
-            correlation = df_daily_sleep_steps['step_count'].corr(df_daily_sleep_steps['sleepTimeUserTz'])
+            # Calculate the correlation between step_count and sleep_duration
+            correlation = df_daily_sleep_steps['step_count'].corr(df_daily_sleep_steps['sleep_duration'])
             obs_count = len(df_daily_sleep_steps)
             # logger_ws_analysis.info(f"correlation: {correlation}, corr type: {correlation}")
             logger_ws_analysis.info(f"df_daily_sleep_steps correlation: {correlation}, corr type: {type(correlation)}")
@@ -74,7 +57,7 @@ def corr_sleep_steps(df):
     except Exception as e:
         logger_ws_analysis.info(f"error in corr_sleep_steps: {e}")
         return "insufficient data", "insufficient data"
-
+#sleep changed
 def corr_sleep_heart_rate(df):
     logger_ws_analysis.info("- in corr_sleep_heart_rate")
     user_id = df['user_id'].iloc[0]
@@ -82,7 +65,8 @@ def corr_sleep_heart_rate(df):
     df_daily_sleep = create_df_daily_sleep(df)
     if len(df_daily_sleep) == 0:
         return "insufficient data", "insufficient data"
-    df_daily_sleep.rename(columns=({'dateUserTz_3pm':'dateUserTz'}),inplace=True)
+    # df_daily_sleep.rename(columns=({'dateUserTz_3pm':'dateUserTz'}),inplace=True)
+    df_daily_sleep.rename(columns=({'startDate_dateOnly_sleep_adj':'startDate_dateOnly'}),inplace=True)
 
     df_daily_heart_rate = create_df_daily_heart_rate(df)
 
@@ -91,15 +75,15 @@ def corr_sleep_heart_rate(df):
         if len(df_daily_heart_rate) > 5:# arbitrary minimum
             logger_ws_analysis.info("- if len(df_daily_heart_rate) > 5")
 
-            # This will keep only the rows that have matching 'dateUserTz' values in both dataframes
-            df_daily_sleep_heart_rate = pd.merge(df_daily_sleep,df_daily_heart_rate, on='dateUserTz')
+            # This will keep only the rows that have matching 'startDate_dateOnly' values in both dataframes
+            df_daily_sleep_heart_rate = pd.merge(df_daily_sleep,df_daily_heart_rate, on='startDate_dateOnly')
 
             # save csv file for user
             csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_sleep_heart_rate.csv")
             df_daily_sleep_heart_rate.to_csv(csv_path_and_filename)
 
-            # Calculate the correlation between step_count and sleepTimeUserTz
-            correlation = df_daily_sleep_heart_rate['heart_rate_avg'].corr(df_daily_sleep_heart_rate['sleepTimeUserTz'])
+            # Calculate the correlation between step_count and sleep_duration
+            correlation = df_daily_sleep_heart_rate['heart_rate_avg'].corr(df_daily_sleep_heart_rate['sleep_duration'])
             obs_count = len(df_daily_sleep_heart_rate)
             logger_ws_analysis.info(f"df_daily_sleep_heart_rate correlation: {correlation}, corr type: {type(correlation)}")
             return correlation, obs_count
@@ -108,7 +92,7 @@ def corr_sleep_heart_rate(df):
     except Exception as e:
         logger_ws_analysis.info(f"error in corr_sleep_heart_rate: {e}")
         return "insufficient data", "insufficient data"
-
+#sleep changed
 def corr_sleep_workouts(df_qty_cat, df_workouts):
 
     logger_ws_analysis.info("- in corr_sleep_workouts")
@@ -116,7 +100,7 @@ def corr_sleep_workouts(df_qty_cat, df_workouts):
     df_daily_sleep = create_df_daily_sleep(df_qty_cat)
     if len(df_daily_sleep) == 0:
         return "insufficient data", "insufficient data"
-    df_daily_sleep.rename(columns=({'dateUserTz_3pm':'dateUserTz'}),inplace=True)
+    df_daily_sleep.rename(columns=({'startDate_dateOnly_sleep_adj':'startDate_dateOnly'}),inplace=True)
 
     df_daily_workout_duration = create_df_daily_workout_duration(df_workouts)
     # df_daily_workout_duration_csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_workout_duration.csv")
@@ -124,13 +108,13 @@ def corr_sleep_workouts(df_qty_cat, df_workouts):
     try:
         if len(df_daily_workout_duration) > 5:# arbitrary minimum
 
-            # This will keep only the rows that have matching 'dateUserTz' values in both dataframes
-            df_daily_sleep_workout_duration = pd.merge(df_daily_sleep,df_daily_workout_duration, on='dateUserTz')
+            # This will keep only the rows that have matching 'startDate_dateOnly' values in both dataframes
+            df_daily_sleep_workout_duration = pd.merge(df_daily_sleep,df_daily_workout_duration, on='startDate_dateOnly')
             # # save csv file for user
             csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_sleep_workout_duration.csv")
             df_daily_sleep_workout_duration.to_csv(csv_path_and_filename)
-            # Calculate the correlation between step_count and sleepTimeUserTz
-            correlation = df_daily_sleep_workout_duration['duration'].corr(df_daily_sleep_workout_duration['sleepTimeUserTz'])
+            # Calculate the correlation between step_count and sleep_duration
+            correlation = df_daily_sleep_workout_duration['duration'].corr(df_daily_sleep_workout_duration['sleep_duration'])
             obs_count = len(df_daily_sleep_workout_duration)
             # logger_ws_analysis.info(f"correlation: {correlation}, corr type: {correlation}")
             logger_ws_analysis.info(f"df_daily_sleep_workout_duration correlation: {correlation}, corr type: {type(correlation)}")
@@ -140,7 +124,7 @@ def corr_sleep_workouts(df_qty_cat, df_workouts):
     except Exception as e:
         logger_ws_analysis.info(f"error in corr_sleep_workouts: {e}")
         return "insufficient data", "insufficient data"
-
+#sleep changed
 def corr_sleep_workout_dummies(df_qty_cat, df_workouts):
 
     logger_ws_analysis.info("- in corr_sleep_workout_dummies")
@@ -148,13 +132,13 @@ def corr_sleep_workout_dummies(df_qty_cat, df_workouts):
     df_daily_sleep = create_df_daily_sleep(df_qty_cat)
     if len(df_daily_sleep) == 0:
         return "insufficient data", "insufficient data"
-    df_daily_sleep.rename(columns=({'dateUserTz_3pm':'dateUserTz'}),inplace=True)
+    df_daily_sleep.rename(columns=({'startDate_dateOnly_sleep_adj':'startDate_dateOnly'}),inplace=True)
 
     df_daily_workout_duration_dummies = create_df_daily_workout_duration_dummies(df_workouts)
     try:
         if len(df_daily_workout_duration_dummies) > 5:# arbitrary minimum
-            # This will keep only the rows that have matching 'dateUserTz' values in both dataframes
-            df_daily_sleep_workout_duration = pd.merge(df_daily_sleep,df_daily_workout_duration_dummies, on='dateUserTz')
+            # This will keep only the rows that have matching 'startDate_dateOnly' values in both dataframes
+            df_daily_sleep_workout_duration = pd.merge(df_daily_sleep,df_daily_workout_duration_dummies, on='startDate_dateOnly')
             # save csv file for user
             csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_sleep_workout_duration_dummies.csv")
             df_daily_sleep_workout_duration.to_csv(csv_path_and_filename)
@@ -166,7 +150,7 @@ def corr_sleep_workout_dummies(df_qty_cat, df_workouts):
             for col in df_daily_sleep_workout_duration.columns:
                 if col.startswith('dur_') and col.endswith('_dummy'):
                     # Calculate the correlation
-                    corr_value = df_daily_sleep_workout_duration['sleepTimeUserTz'].corr(df_daily_sleep_workout_duration[col])
+                    corr_value = df_daily_sleep_workout_duration['sleep_duration'].corr(df_daily_sleep_workout_duration[col])
                     
                     # Append the tuple (column name, correlation value) to the list
                     col_names_and_correlations_tuple_list.append((col, corr_value))
@@ -179,15 +163,14 @@ def corr_sleep_workout_dummies(df_qty_cat, df_workouts):
     except Exception as e:
         logger_ws_analysis.info(f"error in corr_sleep_workouts: {e}")
         return "insufficient data", "insufficient data"
-
+#sleep changed
 # def corr_sleep_cloudiness(df_qty_cat, df_user_locations_day, df_weather_history):
 def corr_sleep_cloudiness(df_qty_cat):
     logger_ws_analysis.info("- in corr_sleep_cloudiness")
     user_id = df_qty_cat['user_id'].iloc[0]
 
     df_sleep_time = create_df_daily_sleep(df_qty_cat)
-    df_sleep_time.rename(columns=({'dateUserTz_3pm':'dateUserTz'}),inplace=True)
-    # df_sleep_time.rename(columns=({'dateUserTz_3pm':'date'}),inplace=True)
+    df_sleep_time.rename(columns=({'startDate_dateOnly_sleep_adj':'startDate_dateOnly'}),inplace=True)
 
     # df_user_locations_day = create_user_location_date_df(user_id)
     df_user_locations_day = create_df_daily_user_location_consecutive(user_id)
@@ -206,16 +189,11 @@ def corr_sleep_cloudiness(df_qty_cat):
     df_daily_cloudcover = pd.merge(df_user_locations_day, df_weather_history[['date', 'location_id', 'cloudcover']],
                         on=['date', 'location_id'], how='left')
     
-    df_daily_cloudcover.rename(columns=({'date':'dateUserTz'}),inplace=True)
+    df_daily_cloudcover.rename(columns=({'date':'startDate_dateOnly'}),inplace=True)
+    df_daily_cloudcover['startDate_dateOnly']=pd.to_datetime(df_daily_cloudcover['startDate_dateOnly'])
 
-    # # if use has recorded more than one city then add to the csv file
-    # if len(df_daily_cloudcover.city.unique()) > 1:
-    #     df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, 
-    #                                         df_daily_cloudcover[['dateUserTz','cloudcover','location_id','city','country','tz_id']],
-    #                                         on=['dateUserTz'],how='left')
-    # else:
-    df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, df_daily_cloudcover[['dateUserTz','cloudcover']],
-                                        on=['dateUserTz'],how='left')
+    df_daily_sleep_time_cloudcover = pd.merge(df_sleep_time, df_daily_cloudcover[['startDate_dateOnly','cloudcover']],
+                                        on=['startDate_dateOnly'],how='left')
 
     df_daily_sleep_time_cloudcover.dropna(inplace=True)
     df_daily_sleep_time_cloudcover.reset_index(inplace=True)
@@ -229,7 +207,7 @@ def corr_sleep_cloudiness(df_qty_cat):
         csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_sleep_time_cloudcover.csv")
         df_daily_sleep_time_cloudcover.to_csv(csv_path_and_filename)
 
-        correlation = df_daily_sleep_time_cloudcover['cloudcover'].corr(df_daily_sleep_time_cloudcover['sleepTimeUserTz'])
+        correlation = df_daily_sleep_time_cloudcover['cloudcover'].corr(df_daily_sleep_time_cloudcover['sleep_duration'])
         logger_ws_analysis.info(f"- correlation: {correlation}")
         return correlation, obs_count
         # else:
@@ -237,12 +215,12 @@ def corr_sleep_cloudiness(df_qty_cat):
     except Exception as e:
         logger_ws_analysis.info(f"error in corr_sleep_heart_rate: {e}")
         return "insufficient data", "insufficient data"
-
+#sleep changed
 def corr_sleep_temperature(df_qty_cat):
     logger_ws_analysis.info("- in corr_sleep_temperature")
     user_id = df_qty_cat['user_id'].iloc[0]
     df_sleep_time = create_df_daily_sleep(df_qty_cat)
-    df_sleep_time.rename(columns=({'dateUserTz_3pm':'dateUserTz'}),inplace=True)
+    df_sleep_time.rename(columns=({'startDate_dateOnly_sleep_adj':'startDate_dateOnly'}),inplace=True)
     df_user_locations_day = create_df_daily_user_location_consecutive(user_id)
     df_weather_history = create_df_weather_history()
 
@@ -250,10 +228,11 @@ def corr_sleep_temperature(df_qty_cat):
     df_daily_temperature = pd.merge(df_user_locations_day, df_weather_history[['date', 'location_id', 'temp']],
                     on=['date', 'location_id'], how='left')
     
-    df_daily_temperature.rename(columns=({'date':'dateUserTz'}),inplace=True)
+    df_daily_temperature.rename(columns=({'date':'startDate_dateOnly'}),inplace=True)
+    df_daily_temperature['startDate_dateOnly']=pd.to_datetime(df_daily_temperature['startDate_dateOnly'])
 
-    df_daily_sleep_time_temperature = pd.merge(df_sleep_time, df_daily_temperature[['dateUserTz','temp']],
-                                        on=['dateUserTz'],how='left')
+    df_daily_sleep_time_temperature = pd.merge(df_sleep_time, df_daily_temperature[['startDate_dateOnly','temp']],
+                                        on=['startDate_dateOnly'],how='left')
 
     df_daily_sleep_time_temperature.dropna(inplace=True)
     df_daily_sleep_time_temperature.reset_index(inplace=True)
@@ -265,7 +244,7 @@ def corr_sleep_temperature(df_qty_cat):
         csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_sleep_time_temperature.csv")
         df_daily_sleep_time_temperature.to_csv(csv_path_and_filename)
 
-        correlation = df_daily_sleep_time_temperature['temp'].corr(df_daily_sleep_time_temperature['sleepTimeUserTz'])
+        correlation = df_daily_sleep_time_temperature['temp'].corr(df_daily_sleep_time_temperature['sleep_duration'])
         logger_ws_analysis.info(f"- correlation: {correlation}")
         return correlation, obs_count
 

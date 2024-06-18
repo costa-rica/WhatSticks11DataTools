@@ -16,13 +16,21 @@ def convert_to_user_tz(utc_str, user_tz_str):
     user_time = utc_time.astimezone(user_tz)
     return user_time
 
+# # Function to determine the dateUserTz_3pm
+# # if the user's time of sleep is before 3pm we count it as the prior day's sleep
+# def get_dateUserTz_3pm_obe(row):
+#     if row['startDateUserTz'].time() >= pd.Timestamp('15:00:00').time():
+#         return row['dateUserTz']
+#     else:
+#         return row['dateUserTz'] - pd.Timedelta(days=1)
+
 # Function to determine the dateUserTz_3pm
 # if the user's time of sleep is before 3pm we count it as the prior day's sleep
-def get_dateUserTz_3pm(row):
-    if row['startDateUserTz'].time() >= pd.Timestamp('15:00:00').time():
-        return row['dateUserTz']
+def get_startDate_3pm(row):
+    if row['startDate'].time() >= pd.Timestamp('15:00:00').time():
+        return pd.to_datetime(row['startDate_dateOnly']) + pd.Timedelta(days=1)
     else:
-        return row['dateUserTz'] - pd.Timedelta(days=1)
+        return pd.to_datetime(row['startDate_dateOnly']) 
 
 # Function to calculate the duration in hours as a float
 def calculate_duration_in_hours(start, end):
@@ -48,24 +56,24 @@ def create_pickle_apple_workouts_path_and_name(user_id_str):
 
 
 ### NEW WS 11 Analysis Package ###
-def adjust_timezone(start_or_end_date, user_tz_str):
-    # Parse the date string to a datetime object
-    # Assuming the input datetime strings are naive and meant to be in UTC
-    date_naive = datetime.strptime(start_or_end_date, '%Y-%m-%d %H:%M:%S')
+# def adjust_timezone(start_or_end_date, user_tz_str):
+#     # Parse the date string to a datetime object
+#     # Assuming the input datetime strings are naive and meant to be in UTC
+#     date_naive = datetime.strptime(start_or_end_date, '%Y-%m-%d %H:%M:%S')
     
-    # Assume the naive datetime is in UTC
-    date_with_tz = date_naive.replace(tzinfo=pytz.utc)
+#     # Assume the naive datetime is in UTC
+#     date_with_tz = date_naive.replace(tzinfo=pytz.utc)
 
-    # Get the target timezone from the user_tz_str
-    target_tz = pytz.timezone(user_tz_str)
+#     # Get the target timezone from the user_tz_str
+#     target_tz = pytz.timezone(user_tz_str)
     
-    # Convert the date to the target timezone
-    date_user_tz = date_with_tz.astimezone(target_tz)
+#     # Convert the date to the target timezone
+#     date_user_tz = date_with_tz.astimezone(target_tz)
     
-    # Make the datetime object timezone-naive
-    date_user_tz_naive = date_user_tz.replace(tzinfo=None)
+#     # Make the datetime object timezone-naive
+#     date_user_tz_naive = date_user_tz.replace(tzinfo=None)
     
-    return date_user_tz_naive
+#     return date_user_tz_naive
 
 
 def add_timezones_from_UserLocationDay(user_id, df):
@@ -92,13 +100,18 @@ def add_timezones_from_UserLocationDay(user_id, df):
     ## Update timezone in df with UserLocationDay timezone -> if exits a row in UserLocationDay
     ##### -> i.e. only matching rows between df['date_utc'] and df_user_loc_day['date_utc_user_check_in_str']
     # First, ensure that the 'date_utc' column in both DataFrames is of the same data type
-    df['date_utc'] = df['date_utc'].astype(str)
+    # df['date_utc'] = df['date_utc'].astype(str)
+    df['startDate_dateOnly'] = df['startDate_dateOnly'].astype(str)
     df_user_loc_day['date_utc_user_check_in_str'] = df_user_loc_day['date_utc_user_check_in_str'].astype(str)
 
     # Merge df with df_user_loc_day to only get matching 'date_utc' with 'date_utc_user_check_in_str'
     # and select the 'tz_id' for those matches.
-    temp_df = df[['date_utc']].merge(df_user_loc_day[['date_utc_user_check_in_str', 'tz_id']], 
-                                    left_on='date_utc', 
+    # temp_df = df[['date_utc']].merge(df_user_loc_day[['date_utc_user_check_in_str', 'tz_id']], 
+    #                                 left_on='date_utc', 
+    #                                 right_on='date_utc_user_check_in_str', 
+    #                                 how='left')
+    temp_df = df[['startDate_dateOnly']].merge(df_user_loc_day[['date_utc_user_check_in_str', 'tz_id']], 
+                                    left_on='startDate_dateOnly', 
                                     right_on='date_utc_user_check_in_str', 
                                     how='left')
 

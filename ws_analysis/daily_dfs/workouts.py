@@ -5,7 +5,7 @@ import pandas as pd; import numpy as np
 def create_df_daily_workout_duration(df):
     logger_ws_analysis.info("- in create_df_daily_workout_duration")
     df['duration'] = pd.to_numeric(df['duration'])
-    aggregated_workout_durations = df.groupby('dateUserTz')['duration'].sum().reset_index()
+    aggregated_workout_durations = df.groupby('startDate_dateOnly')['duration'].sum().reset_index()
     return aggregated_workout_durations
 
 

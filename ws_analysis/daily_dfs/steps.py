@@ -8,17 +8,17 @@ def create_df_daily_steps(df):
     if len(df_steps) == 0:
         return pd.DataFrame()#<-- return must return dataframe, expecting df on other end
     df_steps['quantity'] = pd.to_numeric(df_steps['quantity'])
-    aggregated_steps_data = df_steps.groupby('dateUserTz')['quantity'].sum().reset_index()
+    aggregated_steps_data = df_steps.groupby('startDate_dateOnly')['quantity'].sum().reset_index()
     aggregated_steps_data.rename(columns=({'quantity':'step_count'}),inplace=True)
     return aggregated_steps_data
 
 
 def create_df_n_minus1_daily_steps(df_daily_steps):
     logger_ws_analysis.info("- in create_df_n_minus1_daily_steps")
-    df_daily_steps['dateUserTz'] = pd.to_datetime(df_daily_steps['dateUserTz'])
+    df_daily_steps['startDate_dateOnly'] = pd.to_datetime(df_daily_steps['startDate_dateOnly'])
     # Subtract one day from each date in the column
-    df_daily_steps['dateUserTz'] = df_daily_steps['dateUserTz'] - timedelta(days=1)
+    df_daily_steps['startDate_dateOnly'] = df_daily_steps['startDate_dateOnly'] - timedelta(days=1)
     # Convert back to 'YYYY-MM-DD' format if needed
-    df_daily_steps['dateUserTz'] = df_daily_steps['dateUserTz'].dt.strftime('%Y-%m-%d')
+    df_daily_steps['startDate_dateOnly'] = df_daily_steps['startDate_dateOnly'].dt.strftime('%Y-%m-%d')
 
     return df_daily_steps
