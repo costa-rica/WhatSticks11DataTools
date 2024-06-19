@@ -46,6 +46,7 @@ def create_user_qty_cat_df(user_id):
     
     # Create new column called user_tz_str 
     df['startDate_dateOnly'] = df['startDate'].str[:10]
+    
     df['user_tz_str'] = user_tz_str
 
     # Remove the +0000 from end of all utc strings from startDate and endDate
@@ -53,6 +54,7 @@ def create_user_qty_cat_df(user_id):
     df['endDate'] = df['endDate'].str[:-6]
 
     df = add_timezones_from_UserLocationDay(user_id, df)
+    df['startDate_dateOnly'] = pd.to_datetime(df['startDate_dateOnly'])
 
     return df
 
@@ -151,6 +153,8 @@ def create_user_workouts_df(user_id):
     ## Start NEW METHOD ##
     # Create new column called user_tz_str 
     df['startDate_dateOnly'] = df['startDate'].str[:10]
+    
+
     df['user_tz_str'] = user_tz_str
 
     # Remove the +0000 from end of all utc strings from startDate and endDate
@@ -158,6 +162,13 @@ def create_user_workouts_df(user_id):
     df['endDate'] = df['endDate'].str[:-6]
 
     df = add_timezones_from_UserLocationDay(user_id, df)
+
+    df['startDate_dateOnly'] = pd.to_datetime(df['startDate_dateOnly'])
+    logger_ws_analysis.info("- *********** -")
+    logger_ws_analysis.info("- *********** -")
+    logger_ws_analysis.info(f"{df.dtypes}")
+    logger_ws_analysis.info("- *********** -")
+    logger_ws_analysis.info("- *********** -")
     return df
 
 

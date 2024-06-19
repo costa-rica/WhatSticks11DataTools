@@ -18,7 +18,7 @@ def create_df_daily_heart_rate(df):
 def create_df_n_minus1_daily_heart_rate(df_daily_heart_rate):
     logger_ws_analysis.info("- in create_df_n_minus1_daily_heart_rate")
 
-    df_daily_heart_rate['startDate_dateOnly'] = pd.to_datetime(df_daily_heart_rate['startDate_dateOnly'])
+    # df_daily_heart_rate['startDate_dateOnly'] = pd.to_datetime(df_daily_heart_rate['startDate_dateOnly'])
     # Subtract one day from each date in the column
     df_daily_heart_rate['startDate_dateOnly'] = df_daily_heart_rate['startDate_dateOnly'] - timedelta(days=1)
     # Convert back to 'YYYY-MM-DD' format if needed

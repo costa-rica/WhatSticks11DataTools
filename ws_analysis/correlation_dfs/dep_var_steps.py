@@ -21,7 +21,7 @@ def corr_steps_sleep(df_qty_cat):
     if len(df_daily_steps) == 0:
         logger_ws_analysis.info("- if len(df_daily_steps) == 0:")
         return "insufficient data", "insufficient data"
-    df_daily_steps['startDate_dateOnly']=pd.to_datetime(df_daily_steps['startDate_dateOnly'])
+    # df_daily_steps['startDate_dateOnly']=pd.to_datetime(df_daily_steps['startDate_dateOnly'])
     # Step 2: Create daily sleep n-1 df
     df_daily_sleep = create_df_daily_sleep(df_qty_cat)# create daily sleep
     if len(df_daily_sleep) == 0:
@@ -70,7 +70,7 @@ def corr_steps_heart_rate(df_qty_cat):
     if len(df_daily_steps) == 0:
         logger_ws_analysis.info("- if len(df_daily_steps) == 0:")
         return "insufficient data", "insufficient data"
-    df_daily_steps['startDate_dateOnly']=pd.to_datetime(df_daily_steps['startDate_dateOnly'])
+    # df_daily_steps['startDate_dateOnly']=pd.to_datetime(df_daily_steps['startDate_dateOnly'])
     # Step 2: Create daily heart rate df
     df_daily_heart_rate = create_df_daily_heart_rate(df_qty_cat)# create daily steps
     if len(df_daily_heart_rate) == 0:
@@ -133,7 +133,7 @@ def corr_steps_cloudiness(df_qty_cat):
     if len(df_daily_steps) == 0:
         logger_ws_analysis.info("- if len(df_daily_steps) == 0:")
         return "insufficient data", "insufficient data"
-    df_daily_steps['startDate_dateOnly']=pd.to_datetime(df_daily_steps['startDate_dateOnly'])
+    # df_daily_steps['startDate_dateOnly']=pd.to_datetime(df_daily_steps['startDate_dateOnly'])
 
 
     df_daily_steps_cloudcover = pd.merge(df_daily_cloudcover,df_daily_steps, on='startDate_dateOnly')
@@ -175,7 +175,7 @@ def corr_steps_temperature(df_qty_cat):
     if len(df_daily_steps) == 0:
         logger_ws_analysis.info("- if len(df_daily_steps) == 0:")
         return "insufficient data", "insufficient data"
-    df_daily_steps['startDate_dateOnly']=pd.to_datetime(df_daily_steps['startDate_dateOnly'])
+    # df_daily_steps['startDate_dateOnly']=pd.to_datetime(df_daily_steps['startDate_dateOnly'])
 
 
     df_daily_steps_temperature = pd.merge(df_daily_temperature,df_daily_steps, on='startDate_dateOnly')

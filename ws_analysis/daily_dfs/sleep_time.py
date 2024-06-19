@@ -26,7 +26,7 @@ def create_df_daily_sleep(df):
     df_sleep = df[df['sampleType']=='HKCategoryTypeIdentifierSleepAnalysis'].copy()
     df_sleep['startDate'] = pd.to_datetime(df_sleep['startDate'])
     df_sleep['endDate'] = pd.to_datetime(df_sleep['endDate'])
-    df_sleep['startDate_dateOnly'] = pd.to_datetime(df_sleep['startDate_dateOnly'])
+    # df_sleep['startDate_dateOnly'] = pd.to_datetime(df_sleep['startDate_dateOnly'])
     if len(df_sleep) == 0:
         # return pd.DataFrame()#<-- return must return dataframe, expecting df on other end
         print("no data")
@@ -68,7 +68,7 @@ def create_df_n_minus1_daily_sleep(df_daily_sleep):
     logger_ws_analysis.info("- in create_df_n_minus1_daily_sleep")
     # # Convert back to 'YYYY-MM-DD' format if needed
     # df_daily_sleep['dateUserTz_3pm'] = df_daily_sleep['dateUserTz_3pm'].dt.strftime('%Y-%m-%d')
-    df_daily_sleep['startDate_dateOnly'] = pd.to_datetime(df_daily_sleep['startDate_dateOnly'])
+    # df_daily_sleep['startDate_dateOnly'] = pd.to_datetime(df_daily_sleep['startDate_dateOnly'])
     # Subtract one day from each date in the column
     df_daily_sleep['startDate_dateOnly'] = df_daily_sleep['startDate_dateOnly'] - timedelta(days=1)
     # Convert back to 'YYYY-MM-DD' format if needed
