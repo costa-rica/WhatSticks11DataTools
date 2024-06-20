@@ -1,9 +1,6 @@
 import pandas as pd;import numpy as np
 from ..common.config_and_logger import config, logger_ws_analysis
 import os
-# from ws_analysis import create_user_qty_cat_df, create_df_daily_sleep, create_df_n_minus1_daily_sleep, \
-#     create_df_daily_steps, \
-#     create_df_daily_heart_rate, create_df_n_minus1_daily_heart_rate
 from ..daily_dfs.sleep_time import create_df_daily_sleep, create_df_n_minus1_daily_sleep
 from ..daily_dfs.steps import  create_df_daily_steps
 from ..daily_dfs.heart_rate import create_df_daily_heart_rate, create_df_n_minus1_daily_heart_rate
@@ -32,7 +29,7 @@ def corr_steps_sleep(df_qty_cat):
 
     df_daily_sleep.rename(columns=({'startDate_dateOnly_sleep_adj':'startDate_dateOnly'}),inplace=True)
 
-    df_n_minus1_daily_sleep = create_df_n_minus1_daily_sleep(df_daily_sleep)
+    df_n_minus1_daily_sleep = create_df_n_minus1_daily_sleep(user_id, df_daily_sleep)
     df_n_minus1_daily_sleep['startDate_dateOnly']=pd.to_datetime(df_n_minus1_daily_sleep['startDate_dateOnly'])
 
     # This will keep only the rows that have matching 'startDate_dateOnly' values in both dataframes

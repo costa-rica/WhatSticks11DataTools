@@ -27,26 +27,10 @@ def corr_workouts_sleep(df_workouts, df_qty_cat):
         return "insufficient data", "insufficient data"
     df_daily_sleep.rename(columns=({'startDate_dateOnly_sleep_adj':'startDate_dateOnly'}),inplace=True)
 
-    # logger_ws_analysis.info("-------- df_daily_sleep ------")
-    # logger_ws_analysis.info(df_daily_sleep.dtypes)
-    # logger_ws_analysis.info(len(df_daily_sleep))
-
-    df_n_minus1_daily_sleep = create_df_n_minus1_daily_sleep(df_daily_sleep)
-    # df_n_minus1_daily_sleep['startDate_dateOnly']=pd.to_datetime(df_n_minus1_daily_sleep['startDate_dateOnly'])
-
-    # logger_ws_analysis.info("-------- df_n_minus1_daily_sleep ------")
-    # logger_ws_analysis.info(df_n_minus1_daily_sleep.dtypes)
-    # logger_ws_analysis.info(len(df_n_minus1_daily_sleep))
-    csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_n_minus1_daily_sleep.csv")
-    df_n_minus1_daily_sleep.to_csv(csv_path_and_filename)
-
+    df_n_minus1_daily_sleep = create_df_n_minus1_daily_sleep(user_id, df_daily_sleep)
 
     df_daily_workout_duration = create_df_daily_workout_duration(df_workouts)
-    # df_daily_workout_duration['startDate_dateOnly']=pd.to_datetime(df_daily_workout_duration['startDate_dateOnly'])
 
-    # logger_ws_analysis.info("-------- df_daily_workout_duration ------")
-    # logger_ws_analysis.info(df_daily_workout_duration.dtypes)
-    # logger_ws_analysis.info(len(df_daily_workout_duration))
     csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_daily_workout_duration.csv")
     df_daily_workout_duration.to_csv(csv_path_and_filename)
 
@@ -76,13 +60,11 @@ def corr_workouts_steps(df_workouts, df_qty_cat):
 
     logger_ws_analysis.info("- in corr_workouts_steps")
     user_id = df_qty_cat['user_id'].iloc[0]
-    # df_daily_sleep = create_df_daily_sleep(df_qty_cat)# create daily sleep
     df_daily_steps = create_df_daily_steps(df_qty_cat)# create daily steps
     if len(df_daily_steps) == 0:
         return "insufficient data", "insufficient data"
-    # df_n_minus1_daily_sleep = create_df_n_minus1_daily_sleep(df_daily_sleep)
+
     df_n_minus1_daily_steps = create_df_n_minus1_daily_steps(df_daily_steps)
-    # df_n_minus1_daily_steps['startDate_dateOnly']=pd.to_datetime(df_n_minus1_daily_steps['startDate_dateOnly'])
 
     csv_path_and_filename = os.path.join(config.DAILY_CSV, f"user_{user_id:04}_df_n_minus1_daily_steps.csv")
     df_n_minus1_daily_steps.to_csv(csv_path_and_filename)
