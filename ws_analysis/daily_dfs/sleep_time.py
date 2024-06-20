@@ -71,7 +71,7 @@ def create_df_n_minus1_daily_sleep(df_daily_sleep):
     # df_daily_sleep['startDate_dateOnly'] = pd.to_datetime(df_daily_sleep['startDate_dateOnly'])
     # Subtract one day from each date in the column
     df_daily_sleep['startDate_dateOnly'] = df_daily_sleep['startDate_dateOnly'] - timedelta(days=1)
-    # Convert back to 'YYYY-MM-DD' format if needed
-    df_daily_sleep['startDate_dateOnly'] = df_daily_sleep['startDate_dateOnly'].dt.strftime('%Y-%m-%d')
+    # # Convert back to 'YYYY-MM-DD' format if needed
+    # df_daily_sleep['startDate_dateOnly'] = df_daily_sleep['startDate_dateOnly'].dt.strftime('%Y-%m-%d')
 
     return df_daily_sleep
